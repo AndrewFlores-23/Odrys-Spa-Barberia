@@ -222,3 +222,43 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
 @media(max-width:760px){
   .team-grid article > span.team-zona{top:18px;right:18px}
 }
+
+/* --- Creditos de desarrollo (AW-RiseCR) -----------------------------------
+   Franja propia al final de cada pagina. Trae su propio fondo para verse
+   igual sobre el pie claro del spa y sobre el oscuro de la barberia. */
+.creditos{
+  background:#0f1116;color:#c9d1e0;
+  padding:34px 5vw;display:flex;flex-wrap:wrap;align-items:center;
+  justify-content:space-between;gap:20px;
+}
+.creditos-marca{display:flex;align-items:center;gap:14px;min-width:0}
+.creditos-logo{
+  width:46px;height:46px;object-fit:contain;flex:none;
+  background:#fff;border-radius:10px;padding:5px;
+}
+.creditos-marca small{
+  display:block;font-size:8px;letter-spacing:.2em;font-weight:800;color:#7f8ca4;margin-bottom:4px;
+}
+.creditos-marca strong{
+  display:block;font-size:15px;letter-spacing:.04em;font-weight:800;color:#fff;line-height:1.1;
+}
+.creditos-marca strong em{color:#2f6df0;font-style:normal}
+.creditos-marca span{display:block;font-size:9px;letter-spacing:.12em;color:#7f8ca4;margin-top:4px}
+
+.creditos-redes{display:flex;flex-wrap:wrap;gap:9px}
+.creditos-redes a{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 15px;border-radius:999px;text-decoration:none;
+  border:1px solid rgba(201,209,224,.22);color:#c9d1e0;
+  font-size:9px;font-weight:800;letter-spacing:.12em;
+  transition:background .16s,border-color .16s,color .16s,transform .16s;
+}
+.creditos-redes a:hover{background:#2f6df0;border-color:#2f6df0;color:#fff;transform:translateY(-2px)}
+.creditos-redes a.creditos-whatsapp:hover{background:#25d366;border-color:#25d366;color:#0f1116}
+.creditos-redes svg{width:13px;height:13px;fill:currentColor;flex:none}
+
+@media(max-width:760px){
+  .creditos{padding:28px 24px;flex-direction:column;align-items:flex-start;gap:18px}
+  .creditos-redes{width:100%}
+  .creditos-redes a{flex:1 1 auto;justify-content:center}
+}
