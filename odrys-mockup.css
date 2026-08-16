@@ -177,3 +177,48 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
 }
 .branded-location img{position:relative;z-index:1;filter:drop-shadow(0 22px 28px rgba(20,6,14,.45))}
 .branded-location span{position:relative;z-index:1;text-shadow:0 2px 10px rgba(20,6,14,.6)}
+
+/* --- Tarjetas del equipo: de decorativas a utiles -------------------------
+   Antes eran inicial + nombre + rol, sin salida. Ahora dicen en que zona
+   trabaja cada persona y llevan directo a reservar con ella. */
+.team-grid article{position:relative;justify-content:flex-start;transition:transform .18s,box-shadow .18s,border-color .18s}
+.team-grid article:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(89,52,70,.14);border-color:rgba(155,116,51,.5)}
+.team-monograma{box-shadow:inset 0 0 0 1px rgba(199,161,90,.55),0 6px 16px rgba(89,52,70,.18)}
+.team-zona{
+  position:absolute;top:22px;right:22px;font-size:8px;font-weight:900;letter-spacing:.16em;
+  padding:5px 10px;border-radius:999px;background:rgba(155,116,51,.14);color:var(--gold-dark,#9b7433);
+}
+.team-grid h3{margin:22px 0 6px}
+.team-reservar{
+  margin-top:auto;padding-top:14px;border-top:1px solid rgba(89,52,70,.14);
+  font-size:9px;font-weight:900;letter-spacing:.13em;color:var(--wine,#6b294d);
+  text-decoration:none;display:block;transition:color .15s,letter-spacing .15s;
+}
+.team-reservar:hover{color:var(--gold-dark,#9b7433);letter-spacing:.16em}
+
+/* En la barberia el fondo es oscuro: se invierten los contrastes. */
+.barber-page .team-grid article:hover{box-shadow:0 14px 32px rgba(0,0,0,.4)}
+.barber-page .team-zona{background:rgba(199,161,90,.18);color:var(--gold,#c7a15a)}
+.barber-page .team-reservar{border-top-color:rgba(199,161,90,.22);color:var(--gold,#c7a15a)}
+.barber-page .team-reservar:hover{color:#fff}
+
+@media(max-width:760px){
+  .team-zona{top:18px;right:18px}
+  .team-grid h3{margin:18px 0 6px}
+}
+
+/* La regla .team-grid article>span (monograma) tiene mas especificidad que
+   .team-zona, asi que la insignia heredaba el circulo de 52px. Se apunta con
+   el mismo peso y se reinicia lo heredado. */
+.team-grid article > span.team-zona{
+  width:auto;height:auto;border-radius:999px;display:inline-block;
+  position:absolute;top:22px;right:22px;
+  font-family:inherit;font-size:8px;font-weight:900;letter-spacing:.16em;line-height:1;
+  padding:6px 11px;background:rgba(155,116,51,.14);color:#9b7433;
+  place-items:initial;box-shadow:none;
+}
+.barber-page .team-grid article > span.team-zona{background:rgba(199,161,90,.18);color:#c7a15a}
+
+@media(max-width:760px){
+  .team-grid article > span.team-zona{top:18px;right:18px}
+}

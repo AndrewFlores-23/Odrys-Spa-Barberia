@@ -32,6 +32,7 @@ jobs:
           mkdir -p _site
           cp index.html odrys-mockup.html barberia.html spa.html _site/
           cp odrys-mockup.css idioma.js novedades.js experiencias.js reservas.js _site/
+          cp robots.txt sitemap.xml _site/
           cp -r assets _site/
           if [ -d admin ]; then cp -r admin _site/; fi
           # Evita que Pages procese el sitio con Jekyll y descarte carpetas con guion bajo.
