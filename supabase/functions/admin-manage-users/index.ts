@@ -10,7 +10,12 @@ const URL_SUPABASE = Deno.env.get("SUPABASE_URL")!;
 const CLAVE_ANONIMA = Deno.env.get("SUPABASE_ANON_KEY")!;
 const CLAVE_SERVICIO = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 // A dónde vuelve la persona tras confirmar el correo desde su teléfono.
-const DESTINO_INVITACION = Deno.env.get("ODRYS_URL_PANEL") ?? "http://localhost:4321/admin/";
+// El valor por defecto apunta al sitio publicado; la variable ODRYS_URL_PANEL
+// permite cambiarlo sin volver a desplegar (por ejemplo, a un dominio propio).
+// Esta URL debe estar además en la lista de redirecciones permitidas de
+// Supabase (Authentication → URL Configuration) o el enlace del correo falla.
+const DESTINO_INVITACION = Deno.env.get("ODRYS_URL_PANEL")
+  ?? "https://andrewflores-23.github.io/Odrys-Spa-Barberia/admin/";
 
 const ROLES_VALIDOS = ["administrador", "barbero", "estilista", "masajista"];
 
