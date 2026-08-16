@@ -210,6 +210,20 @@ dialog label span{display:block;font-size:.65rem;letter-spacing:.12em;color:var(
 .acciones-dialogo .boton-plano{border-color:var(--linea);color:var(--gris)}
 .acciones-dialogo .boton-plano:hover{background:#f1eeea}
 
+.par-campos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.casilla-linea{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.casilla-linea input{width:auto;margin:0}
+.casilla-linea span{
+  display:inline;font-size:.88rem;letter-spacing:normal;color:var(--tinta);
+  margin:0;font-weight:400;text-transform:none;
+}
+dialog textarea{resize:vertical;font-size:.9rem}
+
+.servicio-area{
+  display:inline-block;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;font-weight:700;background:var(--vino-suave);color:var(--vino);
+}
+
 .casillas{max-height:320px;overflow-y:auto;border:1px solid var(--linea);border-radius:4px;padding:10px}
 .casillas .grupo{font-size:.62rem;letter-spacing:.12em;color:var(--gris);font-weight:700;margin:12px 0 6px}
 .casillas .grupo:first-child{margin-top:0}

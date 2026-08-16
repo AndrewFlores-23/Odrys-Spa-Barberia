@@ -285,16 +285,7 @@ async function abrirPanel() {
   $("#agenda-desde").value = fechaLocal(0);
   $("#agenda-hasta").value = fechaLocal(30);
 
-  const [{ data: servicios }, { data: rolServicios }] = await Promise.all([
-    supabase.from("services").select("id, category, name_es, price, currency, duration_minutes, active").order("category").order("name_es"),
-    supabase.from("role_services").select("role, service_id"),
-  ]);
-  catalogoServicios = servicios ?? [];
-  mapaRolServicios = new Map();
-  (rolServicios ?? []).forEach(({ role, service_id }) => {
-    if (!mapaRolServicios.has(role)) mapaRolServicios.set(role, new Set());
-    mapaRolServicios.get(role).add(service_id);
-  });
+  await recargarCatalogo();
 
   if (esAdmin) await cargarProfesionalesEnFiltros();
   await cargarAgenda();
@@ -606,11 +597,19 @@ function pintarServicios() {
   const filtro = $("#servicios-categoria").value;
   const lista = catalogoServicios.filter((s) => !filtro || s.category === filtro);
 
+  if (!lista.length) {
+    $("#servicios-lista").innerHTML = `<div class="vacio"><strong>Sin servicios en esta área</strong>Creá el primero con “+ NUEVO SERVICIO”.</div>`;
+    return;
+  }
+
   $("#servicios-lista").innerHTML = lista.map((s) => `
     <article class="fila" data-servicio="${s.id}">
       <div class="fila-principal">
         <h3>${escapar(s.name_es)}</h3>
-        <p>${s.category === "spa" ? "Spa" : "Barbería"}</p>
+        <p>
+          <span class="servicio-area">${s.category === "spa" ? "Spa" : "Barbería"}</span>
+          ${s.active ? "" : ' <span class="insignia neutra">Oculto en la web</span>'}
+        </p>
       </div>
       <div class="fila-acciones">
         <label class="filtro"><span>PRECIO (USD)</span>
@@ -618,10 +617,116 @@ function pintarServicios() {
         <label class="filtro"><span>DURACIÓN (MIN)</span>
           <input type="number" min="5" step="5" data-campo="duration_minutes" value="${s.duration_minutes}"></label>
         <button type="button" data-accion="guardar">GUARDAR</button>
+        <button type="button" data-accion="editar">EDITAR</button>
         <button type="button" data-accion="activo">${s.active ? "OCULTAR" : "MOSTRAR"}</button>
+        <button type="button" data-accion="eliminar" class="peligro">ELIMINAR</button>
       </div>
     </article>`).join("");
 }
+
+// Vuelve a leer el catálogo y el mapa de roles desde la base. Hace falta tras
+// crear o borrar un servicio, porque el trigger de la base ajusta role_services
+// por su cuenta y el panel debe reflejar ese resultado, no adivinarlo.
+async function recargarCatalogo() {
+  const [{ data: servicios }, { data: rolServicios }] = await Promise.all([
+    supabase.from("services").select("id, category, name_es, name_en, description_es, description_en, price, currency, duration_minutes, active").order("category").order("name_es"),
+    supabase.from("role_services").select("role, service_id"),
+  ]);
+  catalogoServicios = servicios ?? [];
+  mapaRolServicios = new Map();
+  (rolServicios ?? []).forEach(({ role, service_id }) => {
+    if (!mapaRolServicios.has(role)) mapaRolServicios.set(role, new Set());
+    mapaRolServicios.get(role).add(service_id);
+  });
+}
+
+// ------------------------------------------------ Crear y editar servicios
+const dialogoServicio = $("#dialogo-servicio");
+const formServicio = $("#form-servicio");
+let servicioEnEdicion = null;
+
+$("#btn-nuevo-servicio").addEventListener("click", () => {
+  servicioEnEdicion = null;
+  formServicio.reset();
+  formServicio.active.checked = true;
+  formServicio.duration_minutes.value = 30;
+  $("#titulo-servicio").textContent = "Nuevo servicio";
+  $("#nota-servicio").textContent =
+    "El área determina en qué página del sitio aparece y qué roles pueden realizarlo.";
+  $("#error-servicio").textContent = "";
+  dialogoServicio.showModal();
+});
+
+function abrirEdicionServicio(servicio) {
+  servicioEnEdicion = servicio;
+  formServicio.reset();
+  formServicio.category.value = servicio.category;
+  formServicio.name_es.value = servicio.name_es ?? "";
+  formServicio.name_en.value = servicio.name_en ?? "";
+  formServicio.description_es.value = servicio.description_es ?? "";
+  formServicio.description_en.value = servicio.description_en ?? "";
+  formServicio.price.value = servicio.price ?? "";
+  formServicio.duration_minutes.value = servicio.duration_minutes;
+  formServicio.active.checked = servicio.active;
+  $("#titulo-servicio").textContent = "Editar servicio";
+  $("#nota-servicio").textContent =
+    "Si cambiás el área, los profesionales cuyo rol ya no cubra el servicio dejarán de ofrecerlo automáticamente.";
+  $("#error-servicio").textContent = "";
+  dialogoServicio.showModal();
+}
+
+formServicio.addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const datos = new FormData(formServicio);
+  const error = $("#error-servicio");
+  const boton = formServicio.querySelector("button[type=submit]");
+  error.textContent = "";
+
+  const precioTexto = String(datos.get("price") ?? "").trim();
+  const duracion = Number(datos.get("duration_minutes"));
+  const nombreEs = String(datos.get("name_es")).trim();
+  const nombreEn = String(datos.get("name_en")).trim();
+
+  if (nombreEs.length < 2 || nombreEn.length < 2) {
+    error.textContent = "Ambos nombres son obligatorios.";
+    return;
+  }
+  if (!Number.isFinite(duracion) || duracion < 5) {
+    error.textContent = "La duración debe ser de al menos 5 minutos.";
+    return;
+  }
+
+  const registro = {
+    category: String(datos.get("category")),
+    name_es: nombreEs,
+    name_en: nombreEn,
+    description_es: String(datos.get("description_es") || "").trim() || null,
+    description_en: String(datos.get("description_en") || "").trim() || null,
+    price: precioTexto === "" ? null : Number(precioTexto),
+    duration_minutes: duracion,
+    active: formServicio.active.checked,
+  };
+
+  boton.disabled = true;
+  boton.textContent = "GUARDANDO…";
+
+  const { error: fallo } = servicioEnEdicion
+    ? await supabase.from("services").update(registro).eq("id", servicioEnEdicion.id)
+    : await supabase.from("services").insert(registro);
+
+  boton.disabled = false;
+  boton.textContent = "GUARDAR";
+
+  if (fallo) {
+    error.textContent = fallo.message;
+    return;
+  }
+
+  dialogoServicio.close();
+  await recargarCatalogo();
+  pintarServicios();
+  avisar(servicioEnEdicion ? "Servicio actualizado." : `"${nombreEs}" creado y ya disponible para asignar.`, "exito");
+});
 
 $("#servicios-lista").addEventListener("click", async (evento) => {
   const boton = evento.target.closest("button[data-accion]");
@@ -630,12 +735,40 @@ $("#servicios-lista").addEventListener("click", async (evento) => {
   const id = fila.dataset.servicio;
   const servicio = catalogoServicios.find((s) => s.id === id);
 
+  if (boton.dataset.accion === "editar") {
+    abrirEdicionServicio(servicio);
+    return;
+  }
+
   if (boton.dataset.accion === "activo") {
     const { error } = await supabase.from("services").update({ active: !servicio.active }).eq("id", id);
     if (error) return avisar("No se pudo cambiar la visibilidad.", "fallo");
     servicio.active = !servicio.active;
     avisar(servicio.active ? "Servicio visible en la web." : "Servicio oculto en la web.", "exito");
     pintarServicios();
+    return;
+  }
+
+  if (boton.dataset.accion === "eliminar") {
+    if (!confirm(`¿Eliminar "${servicio.name_es}"? Si ya se usó en alguna cita no se podrá borrar, para no romper el historial.`)) return;
+
+    const { error } = await supabase.from("services").delete().eq("id", id);
+    if (error) {
+      // La llave foránea de appointment_services protege el historial: si el
+      // servicio aparece en una cita, la base rechaza el borrado.
+      const enUso = error.code === "23503" || /foreign key|viola/i.test(error.message);
+      avisar(
+        enUso
+          ? "Ese servicio ya aparece en citas registradas, así que no se puede borrar. Usá OCULTAR para retirarlo de la web sin perder el historial."
+          : "No se pudo eliminar el servicio.",
+        "fallo",
+      );
+      return;
+    }
+
+    await recargarCatalogo();
+    pintarServicios();
+    avisar("Servicio eliminado.", "exito");
     return;
   }
 

@@ -172,11 +172,13 @@
               <option value="spa">Spa</option>
             </select>
           </label>
+          <button type="button" class="boton-principal" id="btn-nuevo-servicio">+ NUEVO SERVICIO</button>
         </div>
       </div>
       <p class="explicacion">
         El precio y la duración que se guarden acá son los que verá la clienta en la web
-        y los que usa el sistema para calcular las horas libres.
+        y los que usa el sistema para calcular las horas libres. El área decide en qué
+        página aparece el servicio y qué roles pueden realizarlo.
       </p>
       <div id="servicios-lista" class="lista"></div>
     </section>
@@ -267,6 +269,51 @@
     <p class="nota-dialogo" id="nota-servicios-empleado"></p>
     <div id="lista-servicios-empleado" class="casillas"></div>
     <p class="aviso-error" id="error-servicios-empleado" role="alert"></p>
+    <div class="acciones-dialogo">
+      <button type="button" class="boton-plano" data-cerrar>CANCELAR</button>
+      <button type="submit" class="boton-principal">GUARDAR</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dialogo-servicio">
+  <form method="dialog" id="form-servicio">
+    <h3 id="titulo-servicio">Nuevo servicio</h3>
+    <p class="nota-dialogo" id="nota-servicio">
+      El área determina en qué página del sitio aparece y qué roles pueden realizarlo.
+    </p>
+
+    <label>
+      <span>ÁREA</span>
+      <select name="category" id="servicio-area" required>
+        <option value="barberia">Barbería (barbero y estilista)</option>
+        <option value="spa">Spa (masajista)</option>
+      </select>
+    </label>
+
+    <label><span>NOMBRE EN ESPAÑOL</span><input name="name_es" type="text" maxlength="120" required></label>
+    <label><span>NOMBRE EN INGLÉS</span><input name="name_en" type="text" maxlength="120" required></label>
+
+    <label>
+      <span>DESCRIPCIÓN EN ESPAÑOL</span>
+      <textarea name="description_es" rows="2" maxlength="400"></textarea>
+    </label>
+    <label>
+      <span>DESCRIPCIÓN EN INGLÉS</span>
+      <textarea name="description_en" rows="2" maxlength="400"></textarea>
+    </label>
+
+    <div class="par-campos">
+      <label><span>PRECIO (USD)</span><input name="price" type="number" min="0" step="1" placeholder="Dejar vacío = por confirmar"></label>
+      <label><span>DURACIÓN (MIN)</span><input name="duration_minutes" type="number" min="5" step="5" value="30" required></label>
+    </div>
+
+    <label class="casilla-linea">
+      <input type="checkbox" name="active" checked>
+      <span>Visible en la web</span>
+    </label>
+
+    <p class="aviso-error" id="error-servicio" role="alert"></p>
     <div class="acciones-dialogo">
       <button type="button" class="boton-plano" data-cerrar>CANCELAR</button>
       <button type="submit" class="boton-principal">GUARDAR</button>
