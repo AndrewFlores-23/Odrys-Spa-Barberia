@@ -38,6 +38,7 @@ const ESTADOS = {
 let sesionPerfil = null;
 let catalogoServicios = [];
 let mapaRolServicios = new Map();
+let tipoCambio = 520;
 
 // ---------------------------------------------------------------- Utilidades
 const escapar = (valor) => String(valor ?? "").replace(/[&<>'"]/g, (c) => ({
@@ -56,6 +57,14 @@ const soloHora = (iso) => new Intl.DateTimeFormat("es-CR", {
 const dinero = (monto, moneda = "USD") => monto === null || monto === undefined
   ? "—"
   : new Intl.NumberFormat("es-CR", { style: "currency", currency: moneda, maximumFractionDigits: 0 }).format(monto);
+
+// Los precios se guardan en dólares. Los colones son una conversión de
+// referencia con el tipo de cambio del negocio: el monto final se cobra en caja.
+const colones = (montoUsd) => montoUsd === null || montoUsd === undefined
+  ? "—"
+  : `₡${new Intl.NumberFormat("es-CR", { maximumFractionDigits: 0 }).format(Math.round(montoUsd * tipoCambio))}`;
+
+const ambasMonedas = (montoUsd) => `${dinero(montoUsd)} · ${colones(montoUsd)}`;
 
 // Fecha local en formato YYYY-MM-DD, sin que el desfase de zona la corra un día.
 const fechaLocal = (desplazamientoDias = 0) => {
@@ -148,16 +157,38 @@ async function arrancar() {
 }
 
 // --------------------------------------------------------------------- Login
+// Se recuerda únicamente el correo. La contraseña nunca se guarda: quedaría
+// legible para cualquiera que abra el navegador de ese dispositivo, y en un
+// salón la computadora suele ser compartida.
+const CLAVE_CORREO_RECORDADO = "odrys-correo-recordado";
+
+(function precargarCorreo() {
+  try {
+    const guardado = localStorage.getItem(CLAVE_CORREO_RECORDADO);
+    if (!guardado) return;
+    $("#form-login").email.value = guardado;
+    $("#recordar-correo").checked = true;
+    // Con el correo ya puesto, el cursor va directo a la contraseña.
+    $("#form-login").password.focus();
+  } catch (_) { /* navegación privada */ }
+})();
+
 $("#form-login").addEventListener("submit", async (evento) => {
   evento.preventDefault();
   const boton = evento.target.querySelector("button[type=submit]");
   const datos = new FormData(evento.target);
+  const correo = String(datos.get("email")).trim().toLowerCase();
   $("#error-login").textContent = "";
   boton.disabled = true;
   boton.textContent = "ENTRANDO…";
 
+  try {
+    if ($("#recordar-correo").checked) localStorage.setItem(CLAVE_CORREO_RECORDADO, correo);
+    else localStorage.removeItem(CLAVE_CORREO_RECORDADO);
+  } catch (_) { /* navegación privada */ }
+
   const { error } = await supabase.auth.signInWithPassword({
-    email: String(datos.get("email")).trim().toLowerCase(),
+    email: correo,
     password: String(datos.get("password")),
   });
 
@@ -285,7 +316,7 @@ async function abrirPanel() {
   $("#agenda-desde").value = fechaLocal(0);
   $("#agenda-hasta").value = fechaLocal(30);
 
-  await recargarCatalogo();
+  await Promise.all([recargarCatalogo(), cargarTipoCambio()]);
 
   if (esAdmin) await cargarProfesionalesEnFiltros();
   await cargarAgenda();
@@ -359,10 +390,21 @@ async function cargarAgenda() {
 
   contenedor.innerHTML = citas.map((cita) => {
     const estadoInfo = ESTADOS[cita.status] ?? { texto: cita.status, clase: "neutra" };
-    const servicios = cita.appointment_services
-      .map((as) => `${as.quantity} × ${escapar(as.services?.name_es ?? "—")}`).join(" · ");
-    const monto = cita.appointment_services
-      .reduce((s, as) => s + Number(as.price_at_booking ?? 0) * as.quantity, 0);
+    const lineas = cita.appointment_services;
+    const monto = lineas.reduce((s, as) => s + Number(as.price_at_booking ?? 0) * as.quantity, 0);
+    const hayPendientes = lineas.some((as) => as.price_at_booking === null);
+    const minutos = Math.round((new Date(cita.ends_at) - new Date(cita.starts_at)) / 60000);
+
+    const filasDesglose = lineas.map((as) => {
+      const unitario = as.price_at_booking === null ? null : Number(as.price_at_booking);
+      const subtotal = unitario === null ? null : unitario * as.quantity;
+      return `<tr>
+        <td>${escapar(as.services?.name_es ?? "—")}</td>
+        <td class="num">${as.quantity}</td>
+        <td class="num">${unitario === null ? "Por confirmar" : dinero(unitario)}</td>
+        <td class="num">${subtotal === null ? "—" : dinero(subtotal)}<br><span class="colones">${subtotal === null ? "" : colones(subtotal)}</span></td>
+      </tr>`;
+    }).join("");
 
     return `<article class="fila" data-cita="${cita.id}">
       <div class="fila-principal">
@@ -373,7 +415,7 @@ async function cargarAgenda() {
         <div><span>CUÁNDO</span><b>${fechaHora(cita.starts_at)} – ${soloHora(cita.ends_at)}</b></div>
         <div><span>CON</span><b>${escapar(cita.employee?.full_name ?? "—")}</b></div>
         <div><span>PERSONAS</span><b>${cita.party_size}</b></div>
-        <div><span>MONTO</span><b>${dinero(monto)}</b></div>
+        <div><span>TOTAL DEL SERVICIO</span><b>${dinero(monto)}${hayPendientes ? " +" : ""}<br><span class="colones">${colones(monto)}</span></b></div>
       </div>
       <div class="fila-acciones">
         <span class="insignia ${estadoInfo.clase}">${estadoInfo.texto}</span>
@@ -382,9 +424,22 @@ async function cargarAgenda() {
             `<option value="${valor}"${valor === cita.status ? " selected" : ""}>${info.texto}</option>`).join("")}
         </select>
       </div>
-      <div class="servicios-de-cita">
-        ${servicios}${cita.notes ? `<br><em>“${escapar(cita.notes)}”</em>` : ""}
-      </div>
+      <details class="desglose">
+        <summary>Ver desglose · ${lineas.length} servicio(s) · ${minutos} min</summary>
+        <table>
+          <thead>
+            <tr><th>SERVICIO</th><th class="num">CANT.</th><th class="num">UNITARIO</th><th class="num">SUBTOTAL</th></tr>
+          </thead>
+          <tbody>${filasDesglose}</tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3">TOTAL${hayPendientes ? " (hay servicios por confirmar)" : ""}</td>
+              <td class="num">${dinero(monto)}<br><span class="colones">${colones(monto)}</span></td>
+            </tr>
+          </tfoot>
+        </table>
+        ${cita.notes ? `<p class="colones" style="margin-top:10px">Nota de la clienta: “${escapar(cita.notes)}”</p>` : ""}
+      </details>
     </article>`;
   }).join("");
 }
@@ -640,6 +695,32 @@ async function recargarCatalogo() {
   });
 }
 
+// ----------------------------------------------------------- Tipo de cambio
+async function cargarTipoCambio() {
+  const { data } = await supabase
+    .from("ajustes").select("tipo_cambio, actualizado_en").eq("id", true).single();
+  if (!data) return;
+  tipoCambio = Number(data.tipo_cambio);
+  $("#form-tipo-cambio").tipo_cambio.value = tipoCambio;
+  $("#tipo-cambio-info").textContent =
+    `Se usa para mostrar los precios en colones en la web y en la agenda. `
+    + `Última actualización: ${fechaHora(data.actualizado_en)}.`;
+}
+
+$("#form-tipo-cambio").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const valor = Number(new FormData(evento.target).get("tipo_cambio"));
+  if (!Number.isFinite(valor) || valor <= 0) return avisar("Ingresá un tipo de cambio válido.", "fallo");
+
+  const { error } = await supabase.from("ajustes").update({ tipo_cambio: valor }).eq("id", true);
+  if (error) return avisar("No se pudo guardar el tipo de cambio.", "fallo");
+
+  tipoCambio = valor;
+  await cargarTipoCambio();
+  pintarServicios();
+  avisar(`Tipo de cambio actualizado a ₡${valor} por dólar.`, "exito");
+});
+
 // ------------------------------------------------ Crear y editar servicios
 const dialogoServicio = $("#dialogo-servicio");
 const formServicio = $("#form-servicio");
@@ -685,10 +766,9 @@ formServicio.addEventListener("submit", async (evento) => {
   const precioTexto = String(datos.get("price") ?? "").trim();
   const duracion = Number(datos.get("duration_minutes"));
   const nombreEs = String(datos.get("name_es")).trim();
-  const nombreEn = String(datos.get("name_en")).trim();
 
-  if (nombreEs.length < 2 || nombreEn.length < 2) {
-    error.textContent = "Ambos nombres son obligatorios.";
+  if (nombreEs.length < 2) {
+    error.textContent = "El nombre del servicio es obligatorio.";
     return;
   }
   if (!Number.isFinite(duracion) || duracion < 5) {
@@ -699,7 +779,9 @@ formServicio.addEventListener("submit", async (evento) => {
   const registro = {
     category: String(datos.get("category")),
     name_es: nombreEs,
-    name_en: nombreEn,
+    // El inglés queda en null si no se escribió. El sitio muestra el español
+    // en su lugar, que es mejor que una traducción inventada.
+    name_en: String(datos.get("name_en") || "").trim() || null,
     description_es: String(datos.get("description_es") || "").trim() || null,
     description_en: String(datos.get("description_en") || "").trim() || null,
     price: precioTexto === "" ? null : Number(precioTexto),

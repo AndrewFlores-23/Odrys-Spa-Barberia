@@ -91,9 +91,22 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
   })[character]);
 
-  const money = (amount, currency = "USD") => new Intl.NumberFormat(language() === "en" ? "en-US" : "es-CR", {
-    style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0
-  }).format(amount);
+  // Los precios se guardan siempre en dólares. Los colones son una conversión
+  // de referencia con el tipo de cambio que fija el negocio desde el panel.
+  let moneda = (() => {
+    try { return localStorage.getItem("odrys-moneda") === "CRC" ? "CRC" : "USD"; }
+    catch (_) { return "USD"; }
+  })();
+  let tipoCambio = 520;
+
+  const money = (amount, currency = "USD") => {
+    if (moneda === "CRC" && currency === "USD") {
+      return `₡${new Intl.NumberFormat("es-CR", { maximumFractionDigits: 0 }).format(Math.round(amount * tipoCambio))}`;
+    }
+    return new Intl.NumberFormat(language() === "en" ? "en-US" : "es-CR", {
+      style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0
+    }).format(amount);
+  };
 
   const formatDuration = (minutes) => {
     if (!minutes) return "0 min";
@@ -124,6 +137,42 @@
   const mobileCount = dock.querySelector("#mobile-cart-count");
   const mobileTotal = dock.querySelector("#mobile-cart-total");
   dock.addEventListener("click", () => bookingSection?.scrollIntoView({ behavior: "smooth", block: "start" }));
+
+  // --- Conmutador de moneda, junto al de idioma en el encabezado -----------
+  const conmutadorMoneda = document.createElement("button");
+  conmutadorMoneda.type = "button";
+  conmutadorMoneda.className = "currency-toggle";
+  conmutadorMoneda.innerHTML = '<span>USD</span><span>₡</span><i aria-hidden="true"></i>';
+
+  function reflejarMoneda() {
+    const enColones = moneda === "CRC";
+    conmutadorMoneda.classList.toggle("is-colones", enColones);
+    conmutadorMoneda.setAttribute("aria-pressed", String(enColones));
+    conmutadorMoneda.setAttribute("aria-label", enColones
+      ? "Mostrar precios en dólares" : "Mostrar precios en colones");
+  }
+
+  function pintarPreciosDelCatalogo() {
+    services.forEach((servicio) => {
+      const etiqueta = servicio.card.querySelector(".catalog-meta strong");
+      if (etiqueta && servicio.price !== null) etiqueta.textContent = money(servicio.price, servicio.currency);
+    });
+  }
+
+  conmutadorMoneda.addEventListener("click", () => {
+    moneda = moneda === "USD" ? "CRC" : "USD";
+    try { localStorage.setItem("odrys-moneda", moneda); } catch (_) { /* modo privado */ }
+    reflejarMoneda();
+    pintarPreciosDelCatalogo();
+    renderCart();
+  });
+
+  // idioma.js crea .header-actions al arrancar; si aún no existe, se espera.
+  (function colocarConmutador(intentos = 0) {
+    const acciones = document.querySelector(".header-actions");
+    if (acciones) { acciones.appendChild(conmutadorMoneda); reflejarMoneda(); return; }
+    if (intentos < 20) setTimeout(() => colocarConmutador(intentos + 1), 100);
+  })();
 
   const buttonFor = (service) => service.card.querySelector("a[href='#reserva'], .add-service");
   const setButtonLabel = (service, added = false) => {
@@ -199,13 +248,15 @@
   async function cargarCatalogo() {
     try {
       const sb = await obtenerCliente();
-      const [serviciosRes, empleadosRes, asignacionesRes] = await Promise.all([
+      const [serviciosRes, empleadosRes, asignacionesRes, ajustesRes] = await Promise.all([
         sb.from("services").select("id,name_es,price,duration_minutes,active").eq("active", true),
         sb.from("employees_publicos").select("id,full_name,role,zones"),
-        sb.from("employee_services").select("employee_id,service_id")
+        sb.from("employee_services").select("employee_id,service_id"),
+        sb.from("ajustes").select("tipo_cambio").eq("id", true).single()
       ]);
 
       if (serviciosRes.error || empleadosRes.error || asignacionesRes.error) throw new Error("consulta fallida");
+      if (ajustesRes.data?.tipo_cambio) tipoCambio = Number(ajustesRes.data.tipo_cambio);
 
       serviciosRes.data.forEach((s) => catalogo.porNombre.set(s.name_es, s));
       // La lista se arma en cada carga de página, así que un profesional nuevo
@@ -230,6 +281,9 @@
       });
 
       catalogo.listo = true;
+      // Con el tipo de cambio real ya cargado, se repintan las etiquetas del
+      // catálogo por si la persona venía con los colones seleccionados.
+      pintarPreciosDelCatalogo();
     } catch (problema) {
       console.error("[Odry's] No se pudo cargar el catálogo:", problema);
       catalogo.error = true;
@@ -372,6 +426,25 @@
     dock.querySelector("small").textContent = labels.view;
     dock.setAttribute("aria-label", labels.viewRequest);
     dock.classList.toggle("has-items", count > 0);
+
+    // El precio real está en dólares; en colones es una referencia al cambio
+    // del día. Decirlo evita un reclamo en caja por unos cientos de colones.
+    const aviso = totalElement.closest(".booking-total")?.querySelector("small");
+    if (aviso) {
+      let nota = aviso.parentElement.querySelector(".nota-moneda");
+      if (moneda === "CRC") {
+        if (!nota) {
+          nota = document.createElement("small");
+          nota.className = "nota-moneda";
+          aviso.after(nota);
+        }
+        nota.textContent = lang === "en"
+          ? `Colón amounts are a reference at ₡${tipoCambio} per dollar. Prices are set in US dollars.`
+          : `El monto en colones es referencial, a ₡${tipoCambio} por dólar. Los precios están fijados en dólares.`;
+      } else if (nota) {
+        nota.remove();
+      }
+    }
 
     actualizarProfesionales();
   }

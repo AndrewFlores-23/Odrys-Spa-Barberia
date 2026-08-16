@@ -138,3 +138,26 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
 /* El desplegable de horas puede quedar largo: se limita su altura visible. */
 #campo-hora,#campo-profesional{max-height:none}
 #campo-hora:disabled,#campo-profesional:disabled{opacity:.6}
+
+/* --- Conmutador de moneda (mismo lenguaje visual que el de idioma) -------- */
+.currency-toggle{position:relative;width:78px;height:34px;padding:0 7px;border:1px solid rgba(155,116,51,.52);border-radius:999px;display:grid;grid-template-columns:1fr 1fr;align-items:center;background:#fffaf8;color:var(--wine);font-size:9px;font-weight:900;letter-spacing:.06em;cursor:pointer;box-shadow:0 4px 15px rgba(71,26,51,.08)}
+.currency-toggle span{position:relative;z-index:2;text-align:center;transition:color .25s}
+.currency-toggle span:first-child{color:#fff}
+.currency-toggle span:nth-child(2){color:var(--wine)}
+.currency-toggle i{position:absolute;z-index:1;top:3px;left:3px;width:34px;height:26px;border-radius:999px;background:var(--wine);box-shadow:0 3px 10px rgba(71,26,51,.2);transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+.currency-toggle.is-colones i{transform:translateX(37px)}
+.currency-toggle.is-colones span:first-child{color:var(--wine)}
+.currency-toggle.is-colones span:nth-child(2){color:#fff}
+.currency-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.barber-page .currency-toggle{background:#1b181c;border-color:rgba(199,161,90,.42);color:#f4efe9}
+.barber-page .currency-toggle span:nth-child(2){color:#f4efe9}
+.barber-page .currency-toggle.is-colones span:first-child{color:#f4efe9}
+
+/* Aclaración de que los colones son referenciales. */
+.nota-moneda{display:block;margin-top:8px;font-size:10px;letter-spacing:.02em;opacity:.72;line-height:1.45}
+
+@media(max-width:760px){
+  .currency-toggle{width:70px;height:32px;padding:0 6px}
+  .currency-toggle i{width:30px;height:24px}
+  .currency-toggle.is-colones i{transform:translateX(33px)}
+}

@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Panel · Odry's Beauty Spa &amp; Barber</title>
   <link rel="icon" href="../assets/images/odrys-logo.png">
-  <link rel="stylesheet" href="admin.css?v=20260816-1">
+  <link rel="stylesheet" href="admin.css?v=20260816-2">
 </head>
 <body>
 
@@ -30,6 +30,11 @@
     <label>
       <span>CONTRASEÑA</span>
       <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+
+    <label class="casilla-linea recordar">
+      <input type="checkbox" name="recordar" id="recordar-correo">
+      <span>Recordar mi correo en este dispositivo</span>
     </label>
 
     <p class="aviso-error" id="error-login" role="alert" aria-live="polite"></p>
@@ -180,6 +185,15 @@
         y los que usa el sistema para calcular las horas libres. El área decide en qué
         página aparece el servicio y qué roles pueden realizarlo.
       </p>
+
+      <form class="barra-tipo-cambio" id="form-tipo-cambio">
+        <label>
+          <span>TIPO DE CAMBIO — COLONES POR DÓLAR</span>
+          <input name="tipo_cambio" type="number" min="1" step="0.01" required>
+        </label>
+        <button type="submit" class="boton-principal">GUARDAR</button>
+        <small id="tipo-cambio-info"></small>
+      </form>
       <div id="servicios-lista" class="lista"></div>
     </section>
 
@@ -291,17 +305,24 @@
       </select>
     </label>
 
-    <label><span>NOMBRE EN ESPAÑOL</span><input name="name_es" type="text" maxlength="120" required></label>
-    <label><span>NOMBRE EN INGLÉS</span><input name="name_en" type="text" maxlength="120" required></label>
+    <label><span>NOMBRE DEL SERVICIO</span><input name="name_es" type="text" maxlength="120" required></label>
+    <label>
+      <span>DESCRIPCIÓN</span>
+      <textarea name="description_es" rows="2" maxlength="400" placeholder="Opcional. Se muestra debajo del nombre en la web."></textarea>
+    </label>
 
-    <label>
-      <span>DESCRIPCIÓN EN ESPAÑOL</span>
-      <textarea name="description_es" rows="2" maxlength="400"></textarea>
-    </label>
-    <label>
-      <span>DESCRIPCIÓN EN INGLÉS</span>
-      <textarea name="description_en" rows="2" maxlength="400"></textarea>
-    </label>
+    <details class="bloque-ingles">
+      <summary>Textos en inglés <em>(opcional)</em></summary>
+      <p class="nota-dialogo">
+        Si los dejás vacíos, la web en inglés muestra el texto en español. Completalos
+        solo si tenés la traducción correcta a mano.
+      </p>
+      <label><span>NOMBRE EN INGLÉS</span><input name="name_en" type="text" maxlength="120"></label>
+      <label>
+        <span>DESCRIPCIÓN EN INGLÉS</span>
+        <textarea name="description_en" rows="2" maxlength="400"></textarea>
+      </label>
+    </details>
 
     <div class="par-campos">
       <label><span>PRECIO (USD)</span><input name="price" type="number" min="0" step="1" placeholder="Dejar vacío = por confirmar"></label>
@@ -338,7 +359,7 @@
 
 <div id="avisos" class="avisos" aria-live="polite"></div>
 
-<script src="../assets/js/odrys-config.js?v=20260816-1"></script>
-<script type="module" src="panel.js?v=20260816-1"></script>
+<script src="../assets/js/odrys-config.js?v=20260816-2"></script>
+<script type="module" src="panel.js?v=20260816-2"></script>
 </body>
 </html>

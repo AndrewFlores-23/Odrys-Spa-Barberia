@@ -110,7 +110,11 @@ Deno.serve(async (req) => {
 
     const services = (appointment.appointment_services || [])
       .map((item: any) => {
-        const name = lang === "en" ? item.services?.name_en : item.services?.name_es;
+        // El nombre en inglés es opcional: si no se cargó, se muestra el español
+        // en vez de dejar el renglón vacío.
+        const name = lang === "en"
+          ? (item.services?.name_en || item.services?.name_es)
+          : item.services?.name_es;
         return `<li>${item.quantity} × ${name}</li>`;
       })
       .join("");
