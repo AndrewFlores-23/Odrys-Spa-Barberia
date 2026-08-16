@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>Panel · Odry's Beauty Spa &amp; Barber</title>
   <link rel="icon" href="../assets/images/odrys-logo.png">
-  <link rel="stylesheet" href="admin.css?v=20260816-2">
+  <link rel="stylesheet" href="admin.css?v=20260816-3">
 </head>
 <body>
 
@@ -112,6 +112,7 @@
     <button type="button" class="activa" data-vista="agenda">AGENDA</button>
     <button type="button" data-vista="usuarios" data-solo-admin>USUARIOS</button>
     <button type="button" data-vista="servicios" data-solo-admin>SERVICIOS</button>
+    <button type="button" data-vista="horarios">HORARIOS</button>
     <button type="button" data-vista="ausencias">AUSENCIAS</button>
     <button type="button" data-vista="cuenta">MI CUENTA</button>
   </nav>
@@ -195,6 +196,30 @@
         <small id="tipo-cambio-info"></small>
       </form>
       <div id="servicios-lista" class="lista"></div>
+    </section>
+
+    <!-- ----------------------------------------------------- Horarios -->
+    <section id="vista-horarios" class="vista" hidden>
+      <div class="encabezado-vista">
+        <h2>Horarios de atención</h2>
+        <div class="filtros">
+          <label class="filtro" id="filtro-horario-persona" hidden>
+            <span>PROFESIONAL</span>
+            <select id="horario-persona"></select>
+          </label>
+        </div>
+      </div>
+      <p class="explicacion">
+        Marcá los días que atendés y a qué hora. Si dejás un almuerzo, esas horas
+        desaparecen de la agenda pública y nadie puede reservarte en ese rato.
+        Las citas ya reservadas no se mueven solas: revisá la agenda si recortás un día.
+      </p>
+
+      <form id="form-horarios">
+        <div class="tabla-horarios" id="tabla-horarios"></div>
+        <p class="aviso-error" id="error-horarios" role="alert"></p>
+        <button type="submit" class="boton-principal">GUARDAR HORARIO</button>
+      </form>
     </section>
 
     <!-- ---------------------------------------------------- Ausencias -->
@@ -360,6 +385,6 @@
 <div id="avisos" class="avisos" aria-live="polite"></div>
 
 <script src="../assets/js/odrys-config.js?v=20260816-2"></script>
-<script type="module" src="panel.js?v=20260816-2"></script>
+<script type="module" src="panel.js?v=20260816-3"></script>
 </body>
 </html>

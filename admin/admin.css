@@ -210,6 +210,25 @@ dialog label span{display:block;font-size:.65rem;letter-spacing:.12em;color:var(
 .acciones-dialogo .boton-plano{border-color:var(--linea);color:var(--gris)}
 .acciones-dialogo .boton-plano:hover{background:#f1eeea}
 
+.tabla-horarios{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.dia-horario{
+  background:#fff;border:1px solid var(--linea);border-radius:5px;padding:12px 16px;
+  display:grid;grid-template-columns:150px repeat(4,1fr);gap:12px;align-items:end;box-shadow:var(--sombra);
+}
+.dia-horario.cerrado{opacity:.5}
+.dia-horario .nombre-dia{display:flex;align-items:center;gap:9px;font-weight:500}
+.dia-horario .nombre-dia input{width:auto;margin:0}
+.dia-horario label span{
+  display:block;font-size:.58rem;letter-spacing:.1em;color:var(--gris);margin-bottom:4px;font-weight:700;
+}
+.dia-horario input[type=time]{padding:7px 9px;font-size:.85rem}
+.dia-horario .almuerzo{border-left:2px solid var(--dorado);padding-left:12px}
+@media(max-width:760px){
+  .dia-horario{grid-template-columns:1fr 1fr;gap:10px}
+  .dia-horario .nombre-dia{grid-column:1/-1}
+  .dia-horario .almuerzo{border-left:0;border-top:1px solid var(--linea);padding:10px 0 0}
+}
+
 .barra-tipo-cambio{
   display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;
   background:#fff;border:1px solid var(--linea);border-left:3px solid var(--dorado);

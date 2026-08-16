@@ -330,6 +330,7 @@ $("#pestanas").addEventListener("click", (evento) => {
 
   if (boton.dataset.vista === "usuarios") cargarUsuarios();
   if (boton.dataset.vista === "servicios") pintarServicios();
+  if (boton.dataset.vista === "horarios") cargarHorarios();
   if (boton.dataset.vista === "ausencias") cargarAusencias();
   if (boton.dataset.vista === "cuenta") pintarCuenta();
 });
@@ -940,6 +941,143 @@ formCambiarClave.addEventListener("submit", async (evento) => {
   formCambiarClave.reset();
   $$("#requisitos-cambio li").forEach((li) => li.classList.remove("cumple"));
   avisar("Contraseña actualizada.", "exito");
+});
+
+// ------------------------------------------------------------------ Horarios
+// La base guarda bloques sueltos (employee_schedules). La pantalla piensa en
+// "jornada + almuerzo", que es como lo piensa una persona, y traduce: un día con
+// almuerzo son dos filas; un día corrido, una sola.
+const DIAS = [
+  { n: 0, nombre: "Domingo" }, { n: 1, nombre: "Lunes" }, { n: 2, nombre: "Martes" },
+  { n: 3, nombre: "Miércoles" }, { n: 4, nombre: "Jueves" }, { n: 5, nombre: "Viernes" },
+  { n: 6, nombre: "Sábado" },
+];
+
+const hhmm = (hora) => (hora ?? "").slice(0, 5);
+
+function personaDelHorario() {
+  const selector = $("#horario-persona");
+  return (sesionPerfil.role === "administrador" && selector.value) ? selector.value : sesionPerfil.id;
+}
+
+async function cargarHorarios() {
+  const esAdmin = sesionPerfil.role === "administrador";
+  $("#filtro-horario-persona").hidden = !esAdmin;
+
+  if (esAdmin && !$("#horario-persona").options.length) {
+    const { data } = await supabase.from("profiles").select("id, full_name").order("full_name");
+    $("#horario-persona").innerHTML = (data ?? [])
+      .map((p) => `<option value="${p.id}">${escapar(p.full_name)}</option>`).join("");
+    $("#horario-persona").value = sesionPerfil.id;
+  }
+
+  const { data: bloques } = await supabase
+    .from("employee_schedules")
+    .select("weekday, starts_at, ends_at")
+    .eq("employee_id", personaDelHorario())
+    .order("weekday").order("starts_at");
+
+  const porDia = new Map();
+  (bloques ?? []).forEach((b) => {
+    if (!porDia.has(b.weekday)) porDia.set(b.weekday, []);
+    porDia.get(b.weekday).push(b);
+  });
+
+  $("#tabla-horarios").innerHTML = DIAS.map((dia) => {
+    const partes = porDia.get(dia.n) ?? [];
+    const atiende = partes.length > 0;
+    const inicio = atiende ? hhmm(partes[0].starts_at) : "09:00";
+    const fin = atiende ? hhmm(partes[partes.length - 1].ends_at) : "19:00";
+    // Dos bloques significan que hay un hueco en medio: ese hueco es el almuerzo.
+    const hayAlmuerzo = partes.length > 1;
+    const almuerzoDesde = hayAlmuerzo ? hhmm(partes[0].ends_at) : "12:00";
+    const almuerzoHasta = hayAlmuerzo ? hhmm(partes[1].starts_at) : "13:00";
+
+    return `<div class="dia-horario${atiende ? "" : " cerrado"}" data-dia="${dia.n}">
+      <label class="nombre-dia">
+        <input type="checkbox" data-campo="atiende"${atiende ? " checked" : ""}>
+        <span>${dia.nombre}</span>
+      </label>
+      <label><span>ENTRA</span><input type="time" data-campo="inicio" value="${inicio}" step="900"></label>
+      <label><span>SALE</span><input type="time" data-campo="fin" value="${fin}" step="900"></label>
+      <label class="almuerzo"><span>ALMUERZO DESDE</span>
+        <input type="time" data-campo="almuerzo_desde" value="${hayAlmuerzo ? almuerzoDesde : ""}" step="900"></label>
+      <label><span>ALMUERZO HASTA</span>
+        <input type="time" data-campo="almuerzo_hasta" value="${hayAlmuerzo ? almuerzoHasta : ""}" step="900"></label>
+    </div>`;
+  }).join("");
+}
+
+$("#horario-persona").addEventListener("change", cargarHorarios);
+
+$("#tabla-horarios").addEventListener("change", (evento) => {
+  const casilla = evento.target.closest('input[data-campo="atiende"]');
+  if (!casilla) return;
+  casilla.closest(".dia-horario").classList.toggle("cerrado", !casilla.checked);
+});
+
+$("#form-horarios").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const error = $("#error-horarios");
+  const boton = evento.target.querySelector("button[type=submit]");
+  error.textContent = "";
+
+  const filas = [];
+  for (const dia of $$("#tabla-horarios .dia-horario")) {
+    const n = Number(dia.dataset.dia);
+    const valor = (campo) => dia.querySelector(`[data-campo="${campo}"]`).value;
+    if (!dia.querySelector('[data-campo="atiende"]').checked) continue;
+
+    const inicio = valor("inicio");
+    const fin = valor("fin");
+    const aDesde = valor("almuerzo_desde");
+    const aHasta = valor("almuerzo_hasta");
+
+    if (!inicio || !fin || fin <= inicio) {
+      error.textContent = `Revisá el horario del ${DIAS[n].nombre}: la salida debe ser posterior a la entrada.`;
+      return;
+    }
+
+    if (aDesde || aHasta) {
+      if (!aDesde || !aHasta || aHasta <= aDesde) {
+        error.textContent = `Revisá el almuerzo del ${DIAS[n].nombre}: falta una hora o el fin es anterior al inicio.`;
+        return;
+      }
+      if (aDesde <= inicio || aHasta >= fin) {
+        error.textContent = `El almuerzo del ${DIAS[n].nombre} tiene que quedar dentro de la jornada.`;
+        return;
+      }
+      filas.push({ weekday: n, starts_at: inicio, ends_at: aDesde });
+      filas.push({ weekday: n, starts_at: aHasta, ends_at: fin });
+    } else {
+      filas.push({ weekday: n, starts_at: inicio, ends_at: fin });
+    }
+  }
+
+  boton.disabled = true;
+  boton.textContent = "GUARDANDO…";
+  const persona = personaDelHorario();
+
+  // Se reemplaza el horario completo: es más simple y predecible que calcular
+  // qué bloque cambió, y evita chocar con la restricción de solapamiento.
+  const { error: fallaBorrado } = await supabase
+    .from("employee_schedules").delete().eq("employee_id", persona);
+
+  if (!fallaBorrado && filas.length) {
+    const { error: fallaAlta } = await supabase
+      .from("employee_schedules")
+      .insert(filas.map((f) => ({ ...f, employee_id: persona })));
+    if (fallaAlta) error.textContent = fallaAlta.message;
+  } else if (fallaBorrado) {
+    error.textContent = fallaBorrado.message;
+  }
+
+  boton.disabled = false;
+  boton.textContent = "GUARDAR HORARIO";
+  if (!error.textContent) {
+    avisar(filas.length ? "Horario guardado." : "Se quitaron todos los días de atención.", "exito");
+    cargarHorarios();
+  }
 });
 
 // ----------------------------------------------------------------- Ausencias

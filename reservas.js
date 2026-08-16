@@ -1,9 +1,128 @@
-(() => {
+(async () => {
   const form = document.querySelector("#reservation-form");
   if (!form) return;
 
   const config = window.ODRYS_CONFIG ?? {};
   const phone = config.whatsapp ?? "50662180804";
+  const zonaDeLaPaginaTmp = document.body.classList.contains("spa-page") ? "spa" : "barberia";
+
+  // -------------------------------------------------------------------------
+  // Catálogo servido desde la base
+  // -------------------------------------------------------------------------
+  // El HTML trae el catálogo escrito a mano. Sirve como respaldo: si la base no
+  // responde, la clienta igual ve los servicios y la página conserva su
+  // contenido para los buscadores. Si la base sí responde, se reemplaza, y así
+  // un servicio creado desde el panel aparece sin tocar el HTML.
+  let clienteTemprano = null;
+  async function obtenerClienteTemprano() {
+    if (clienteTemprano) return clienteTemprano;
+    const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+    clienteTemprano = createClient(config.supabaseUrl, config.supabaseKey);
+    return clienteTemprano;
+  }
+
+  const idiomaActual = () => (document.documentElement.lang === "en" ? "en" : "es");
+  const textoSegunIdioma = (es, en) => (idiomaActual() === "en" ? (en || es) : es);
+
+  const esc = (valor) => String(valor ?? "").replace(/[&<>'"]/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
+  }[c]));
+
+  // Moneda: se define antes que el catálogo porque las tarjetas ya salen
+  // impresas en la moneda elegida. Los precios se guardan siempre en dólares;
+  // los colones son una conversión con el tipo de cambio del negocio.
+  let moneda = (() => {
+    try { return localStorage.getItem("odrys-moneda") === "CRC" ? "CRC" : "USD"; }
+    catch (_) { return "USD"; }
+  })();
+  let tipoCambio = 520;
+
+  const money = (amount, currency = "USD") => {
+    if (moneda === "CRC" && currency === "USD") {
+      return `₡${new Intl.NumberFormat("es-CR", { maximumFractionDigits: 0 }).format(Math.round(amount * tipoCambio))}`;
+    }
+    return new Intl.NumberFormat(idiomaActual() === "en" ? "en-US" : "es-CR", {
+      style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  function dibujarCatalogo(servicios) {
+    const seccion = document.querySelector("#servicios");
+    if (!seccion || !servicios.length) return false;
+
+    const grupos = new Map();
+    servicios.forEach((s) => {
+      const clave = `${s.orden_grupo}|${s.grupo_es ?? ""}`;
+      if (!grupos.has(clave)) grupos.set(clave, { es: s.grupo_es, en: s.grupo_en, items: [] });
+      grupos.get(clave).items.push(s);
+    });
+
+    let indice = 0;
+    const html = [...grupos.entries()]
+      .sort((a, b) => Number(a[0].split("|")[0]) - Number(b[0].split("|")[0]))
+      .map(([, grupo]) => {
+        const tarjetas = grupo.items.sort((a, b) => a.orden - b.orden).map((s) => {
+          indice += 1;
+          const precio = s.price === null || s.price === undefined ? null : Number(s.price);
+          const nombreEn = s.name_en || s.name_es;
+          const descEn = s.description_en || s.description_es;
+
+          const meta = precio === null
+            ? `<strong data-es="PRECIO POR CONFIRMAR" data-en="PRICE TO CONFIRM">${esc(textoSegunIdioma("PRECIO POR CONFIRMAR", "PRICE TO CONFIRM"))}</strong>`
+            : `<span>${s.duration_minutes} MIN</span><strong>${money(precio, s.currency || "USD")}</strong>`;
+
+          const descripcion = s.description_es
+            ? `<p data-es="${esc(s.description_es)}" data-en="${esc(descEn)}">${esc(textoSegunIdioma(s.description_es, descEn))}</p>`
+            : "";
+
+          return `<article class="catalog-card" data-service-es="${esc(s.name_es)}" data-service-en="${esc(nombreEn)}"`
+            + (precio === null ? "" : ` data-price="${precio}" data-currency="${esc(s.currency || "USD")}"`)
+            + ` data-duration="${s.duration_minutes}">`
+            + `<span class="service-index">${String(indice).padStart(2, "0")}</span>`
+            + `<div><h3 data-es="${esc(s.name_es)}" data-en="${esc(nombreEn)}">${esc(textoSegunIdioma(s.name_es, nombreEn))}</h3>${descripcion}</div>`
+            + `<div class="catalog-meta">${meta}</div>`
+            + `<a href="#reserva">AGREGAR</a></article>`;
+        }).join("");
+
+        const tituloEn = grupo.en || grupo.es;
+        return `<details class="service-group" open>`
+          + `<summary><span data-es="${esc(grupo.es)}" data-en="${esc(tituloEn)}">${esc(textoSegunIdioma(grupo.es, tituloEn))}</span>`
+          + `<b>${grupo.items.length} <span data-es="SERVICIOS" data-en="SERVICES">${esc(textoSegunIdioma("SERVICIOS", "SERVICES"))}</span></b></summary>`
+          + `<div class="catalog-grid compact-catalog">${tarjetas}</div></details>`;
+      }).join("");
+
+    seccion.querySelectorAll("details.service-group").forEach((d) => d.remove());
+    seccion.insertAdjacentHTML("beforeend", html);
+    return true;
+  }
+
+  // idioma.js fotografía los elementos traducibles al cargar, así que no ve las
+  // tarjetas creadas después. Se traducen acá.
+  function retraducirCatalogo() {
+    document.querySelectorAll("#servicios [data-es][data-en]").forEach((nodo) => {
+      nodo.textContent = idiomaActual() === "en" ? nodo.dataset.en : nodo.dataset.es;
+    });
+  }
+
+  let catalogoDinamico = false;
+  try {
+    const sb = await obtenerClienteTemprano();
+    // El tipo de cambio se pide junto con el catálogo para que las tarjetas
+    // salgan ya correctas si la persona venía viendo colones.
+    const [serviciosRes, ajustesRes] = await Promise.all([
+      sb.from("services")
+        .select("id,category,name_es,name_en,description_es,description_en,price,currency,duration_minutes,grupo_es,grupo_en,orden_grupo,orden")
+        .eq("active", true).eq("category", zonaDeLaPaginaTmp)
+        .order("orden_grupo").order("orden"),
+      sb.from("ajustes").select("tipo_cambio").eq("id", true).single(),
+    ]);
+    if (serviciosRes.error) throw serviciosRes.error;
+    if (ajustesRes.data?.tipo_cambio) tipoCambio = Number(ajustesRes.data.tipo_cambio);
+    catalogoDinamico = dibujarCatalogo(serviciosRes.data ?? []);
+  } catch (problema) {
+    console.warn("[Odry's] Catálogo desde la base no disponible; se usa el del HTML.", problema);
+  }
+
   const cards = [...document.querySelectorAll(".catalog-card")];
   const itemsContainer = document.querySelector("#cart-items");
   const countElement = document.querySelector("#cart-count");
@@ -91,22 +210,6 @@
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
   })[character]);
 
-  // Los precios se guardan siempre en dólares. Los colones son una conversión
-  // de referencia con el tipo de cambio que fija el negocio desde el panel.
-  let moneda = (() => {
-    try { return localStorage.getItem("odrys-moneda") === "CRC" ? "CRC" : "USD"; }
-    catch (_) { return "USD"; }
-  })();
-  let tipoCambio = 520;
-
-  const money = (amount, currency = "USD") => {
-    if (moneda === "CRC" && currency === "USD") {
-      return `₡${new Intl.NumberFormat("es-CR", { maximumFractionDigits: 0 }).format(Math.round(amount * tipoCambio))}`;
-    }
-    return new Intl.NumberFormat(language() === "en" ? "en-US" : "es-CR", {
-      style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0
-    }).format(amount);
-  };
 
   const formatDuration = (minutes) => {
     if (!minutes) return "0 min";
@@ -235,10 +338,11 @@
   const catalogo = { listo: false, error: false, porNombre: new Map(), empleados: [], porEmpleado: new Map() };
   let cliente = null;
 
+  // Se reutiliza el cliente que ya se creó para dibujar el catálogo: dos
+  // instancias sobre el mismo almacenamiento se pisan entre sí.
   async function obtenerCliente() {
     if (cliente) return cliente;
-    const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
-    cliente = createClient(config.supabaseUrl, config.supabaseKey);
+    cliente = await obtenerClienteTemprano();
     return cliente;
   }
 
@@ -248,15 +352,13 @@
   async function cargarCatalogo() {
     try {
       const sb = await obtenerCliente();
-      const [serviciosRes, empleadosRes, asignacionesRes, ajustesRes] = await Promise.all([
+      const [serviciosRes, empleadosRes, asignacionesRes] = await Promise.all([
         sb.from("services").select("id,name_es,price,duration_minutes,active").eq("active", true),
         sb.from("employees_publicos").select("id,full_name,role,zones"),
-        sb.from("employee_services").select("employee_id,service_id"),
-        sb.from("ajustes").select("tipo_cambio").eq("id", true).single()
+        sb.from("employee_services").select("employee_id,service_id")
       ]);
 
       if (serviciosRes.error || empleadosRes.error || asignacionesRes.error) throw new Error("consulta fallida");
-      if (ajustesRes.data?.tipo_cambio) tipoCambio = Number(ajustesRes.data.tipo_cambio);
 
       serviciosRes.data.forEach((s) => catalogo.porNombre.set(s.name_es, s));
       // La lista se arma en cada carga de página, así que un profesional nuevo
@@ -582,6 +684,11 @@
   });
 
   window.addEventListener("odrys:languagechange", () => {
+    // Las tarjetas dibujadas por este archivo no las conoce idioma.js.
+    if (catalogoDinamico) {
+      retraducirCatalogo();
+      pintarPreciosDelCatalogo();
+    }
     services.forEach((service) => setButtonLabel(service));
     errorElement.textContent = "";
     renderCart();
