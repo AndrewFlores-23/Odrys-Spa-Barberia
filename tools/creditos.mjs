@@ -16,7 +16,9 @@ const MENSAJE = "Vi su trabajo y me gustaría más información para hacer una w
 // de compartir (igsh, utm_source, mibextid). Llevan al mismo lugar.
 const INSTAGRAM = "https://www.instagram.com/aw_risecr";
 const FACEBOOK = "https://www.facebook.com/share/1CZYECAw3w/";
-const LOGO = "assets/images/aw-risecr-logo.png";
+// El logo tiene fondo transparente, así que va directo sobre el fondo oscuro
+// de la franja: el neón se ve como corresponde, sin recuadro detrás.
+const LOGO = "assets/images/aw-risecr-logo.webp";
 
 const PAGINAS = ["index.html", "odrys-mockup.html", "barberia.html", "spa.html"];
 
@@ -53,8 +55,8 @@ function bloque(hayLogo) {
     </div>
   </div>
   <div class="creditos-redes">
-    <a href="${INSTAGRAM}" target="_blank" rel="noopener" aria-label="Instagram de ${EMPRESA}">${ICONOS.instagram}INSTAGRAM</a>
-    <a href="${FACEBOOK}" target="_blank" rel="noopener" aria-label="Facebook de ${EMPRESA}">${ICONOS.facebook}FACEBOOK</a>
+    <a class="creditos-instagram" href="${INSTAGRAM}" target="_blank" rel="noopener" aria-label="Instagram de ${EMPRESA}">${ICONOS.instagram}INSTAGRAM</a>
+    <a class="creditos-facebook" href="${FACEBOOK}" target="_blank" rel="noopener" aria-label="Facebook de ${EMPRESA}">${ICONOS.facebook}FACEBOOK</a>
     <!-- El data-es/data-en va en el span, nunca en el enlace: idioma.js
          reemplaza todo el contenido del elemento traducible y borraría el ícono. -->
     <a class="creditos-whatsapp" href="${enlaceWhatsapp}" target="_blank" rel="noopener" aria-label="Escribir a ${EMPRESA} por WhatsApp">${ICONOS.whatsapp}<span data-es="QUIERO UNA WEB" data-en="I WANT A WEBSITE">QUIERO UNA WEB</span></a>

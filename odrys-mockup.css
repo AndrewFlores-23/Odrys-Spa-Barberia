@@ -262,3 +262,41 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
   .creditos-redes{width:100%}
   .creditos-redes a{flex:1 1 auto;justify-content:center}
 }
+
+/* --- Creditos: ajustes de marca -------------------------------------------
+   El logo es un neon con fondo transparente: va directo sobre el fondo
+   oscuro, sin recuadro blanco detras. */
+.creditos-logo{
+  width:52px;height:52px;background:none;border-radius:0;padding:0;
+  filter:drop-shadow(0 0 12px rgba(79,148,255,.45));
+}
+
+/* Cada red brilla con su propio color al pasar el mouse o al enfocarse con
+   el teclado. Se cubre :focus-visible ademas de :hover para que tambien
+   funcione navegando sin mouse. */
+.creditos-redes a{outline:none}
+
+.creditos-redes a.creditos-instagram:hover,
+.creditos-redes a.creditos-instagram:focus-visible{
+  color:#fff;border-color:transparent;
+  background:radial-gradient(circle at 28% 108%,#fdf497 0,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);
+  box-shadow:0 0 18px rgba(214,36,159,.55),0 0 34px rgba(253,89,73,.35);
+}
+
+.creditos-redes a.creditos-facebook:hover,
+.creditos-redes a.creditos-facebook:focus-visible{
+  color:#fff;background:#1877f2;border-color:#1877f2;
+  box-shadow:0 0 18px rgba(24,119,242,.5);
+}
+
+.creditos-redes a.creditos-whatsapp:hover,
+.creditos-redes a.creditos-whatsapp:focus-visible{
+  color:#0f1116;background:#25d366;border-color:#25d366;
+  box-shadow:0 0 18px rgba(37,211,102,.45);
+}
+
+/* Quien prefiere menos movimiento conserva el cambio de color, sin el salto. */
+@media (prefers-reduced-motion:reduce){
+  .creditos-redes a{transition:background .16s,border-color .16s,color .16s,box-shadow .16s}
+  .creditos-redes a:hover{transform:none}
+}
