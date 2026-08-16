@@ -1,100 +1,83 @@
-# vinext-starter
+# Odry's Beauty Spa & Barber
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Sitio web y sistema de reservas de Odry's, en Tamarindo, Guanacaste.
 
-## Prerequisites
+## Qué es esto
 
-- Node.js `>=22.13.0`
+Dos piezas que trabajan juntas:
 
-## Quick Start
+1. **Sitio público** — HTML, CSS y JavaScript sin compilación. Se abre tal cual,
+   sin `npm install`. Es lo que ve la clienta.
+2. **Sistema de reservas** — base de datos PostgreSQL en Supabase, con cuentas
+   por rol, horarios reales y agenda. El sitio la consulta desde el navegador.
+
+## Estructura
+
+```
+index.html            Portada (odrys-mockup.html es una copia idéntica)
+barberia.html         Barbería y estilismo — 7 servicios
+spa.html              Spa — 29 servicios
+odrys-mockup.css      Todo el diseño
+idioma.js             Cambio de idioma ES/EN
+reservas.js           Carrito, disponibilidad y reserva contra Supabase
+novedades.js          Pestañas de novedades en la portada
+experiencias.js       Galería comparativa del spa
+assets/               Imágenes, video y configuración pública
+  js/odrys-config.js  URL y clave pública de Supabase
+supabase/migrations/  Historial del esquema de la base
+tools/dev-server.mjs  Servidor local para previsualizar
+docs/                 Documentación heredada del andamiaje de Codex
+```
+
+Las carpetas `app/`, `worker/`, `db/`, `drizzle/` y los archivos `next.config.ts`,
+`vite.config.ts` y `package.json` pertenecen a un andamiaje de Next.js sobre
+Cloudflare que quedó sin usar cuando el proyecto pasó a Supabase. Se conservan
+por si hicieran falta; el sitio no depende de ellos.
+
+## Ver el sitio en local
 
 ```bash
-npm install
-npm run dev
-npm run build
+node tools/dev-server.mjs
 ```
 
-This starter does not use `wrangler.jsonc`.
+Queda en `http://localhost:4321`. No requiere dependencias.
 
-## Included Shape
+## Base de datos
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+| Tabla                  | Para qué                                             |
+| ---------------------- | ---------------------------------------------------- |
+| `profiles`             | Cuentas del personal y su rol                         |
+| `services`             | Catálogo con precio, duración e idioma                |
+| `employee_services`    | Qué servicio puede dar cada profesional               |
+| `employee_schedules`   | Horario semanal de atención                           |
+| `time_off`             | Vacaciones y bloqueos de agenda                       |
+| `appointments`         | Citas reservadas                                      |
+| `appointment_services` | Detalle de cada cita, con el precio congelado         |
 
-## Workspace Auth Headers
+Roles: `administrador`, `barbero`, `estilista`, `masajista`.
 
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
+### Cómo se protege
 
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
+- **RLS activo en todas las tablas.** Cada profesional solo ve sus propias
+  citas; el administrador ve todo. La regla se aplica en la base, no en el
+  navegador, así que no se puede saltar desde la consola.
+- **Sin doble reserva.** Una restricción `EXCLUDE` sobre el rango de horario
+  impide físicamente dos citas encimadas para la misma persona.
+- **Reserva por una sola puerta.** El público no puede insertar en
+  `appointments`: solo puede llamar a `book_appointment()`, que valida horario,
+  ausencias, servicios y límites antes de escribir.
+- **Sin escalada de privilegios.** Un trigger impide que alguien se cambie el
+  rol o se reactive a sí mismo.
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+La clave `service_role` de Supabase **nunca** debe entrar en este repositorio.
+La única clave publicada es la `publishable`, que sin RLS no sirve de nada.
 
-Treat the full name as optional and fall back to email when it is absent:
+## Publicación
 
-```tsx
-import { headers } from "next/headers";
+Cada push a `main` dispara `.github/workflows/deploy.yml`, que publica el sitio
+en GitHub Pages.
 
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
+## Migraciones
 
-  const displayName = fullName ?? email;
-  // ...
-}
-```
-
-## Optional Dispatch-Owned ChatGPT Sign-In
-
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
-
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
-
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+Los archivos de `supabase/migrations/` son el historial del esquema. Se aplican
+en orden y quedan registrados en la base.

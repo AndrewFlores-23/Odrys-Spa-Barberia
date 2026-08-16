@@ -1,0 +1,45 @@
+name: Publicar sitio
+
+# Cada push a main vuelve a publicar el sitio en GitHub Pages.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Si se empujan dos cambios seguidos, se publica el último y se cancela el anterior.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Se publica solo el sitio público. El andamiaje de Next/Cloudflare y las
+      # migraciones de la base quedan versionados pero fuera de lo publicado.
+      - name: Armar carpeta de publicación
+        run: |
+          mkdir -p _site
+          cp index.html odrys-mockup.html barberia.html spa.html _site/
+          cp odrys-mockup.css idioma.js novedades.js experiencias.js reservas.js _site/
+          cp -r assets _site/
+          if [ -d admin ]; then cp -r admin _site/; fi
+          # Evita que Pages procese el sitio con Jekyll y descarte carpetas con guion bajo.
+          touch _site/.nojekyll
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

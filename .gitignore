@@ -42,3 +42,10 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# Respaldos comprimidos: viven fuera del repo, en ../OdrysSpa-Respaldos
+*.zip
+
+# Carpetas temporales de trabajo
+/tmp/
+/_site/
