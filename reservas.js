@@ -17,6 +17,9 @@
   const campoFecha = document.querySelector("#campo-fecha");
   const cart = new Map();
   const language = () => document.documentElement.lang === "en" ? "en" : "es";
+  // Cada página atiende a una zona del negocio: la barbería no debe ofrecer
+  // masajistas ni el spa barberos, aunque alguien cubriera ambos catálogos.
+  const zonaDeLaPagina = document.body.classList.contains("spa-page") ? "spa" : "barberia";
   const business = document.body.classList.contains("spa-page")
     ? { es: "Odry's Beauty Spa", en: "Odry's Beauty Spa" }
     : { es: "Odry's Barbería y Estilismo", en: "Odry's Barbering & Hair Styling" };
@@ -198,14 +201,17 @@
       const sb = await obtenerCliente();
       const [serviciosRes, empleadosRes, asignacionesRes] = await Promise.all([
         sb.from("services").select("id,name_es,price,duration_minutes,active").eq("active", true),
-        sb.from("employees_publicos").select("id,full_name,role"),
+        sb.from("employees_publicos").select("id,full_name,role,zones"),
         sb.from("employee_services").select("employee_id,service_id")
       ]);
 
       if (serviciosRes.error || empleadosRes.error || asignacionesRes.error) throw new Error("consulta fallida");
 
       serviciosRes.data.forEach((s) => catalogo.porNombre.set(s.name_es, s));
-      catalogo.empleados = empleadosRes.data ?? [];
+      // La lista se arma en cada carga de página, así que un profesional nuevo
+      // aparece solo en cuanto confirma su correo y se le asignan servicios.
+      catalogo.empleados = (empleadosRes.data ?? [])
+        .filter((empleado) => (empleado.zones ?? []).includes(zonaDeLaPagina));
       asignacionesRes.data.forEach(({ employee_id, service_id }) => {
         if (!catalogo.porEmpleado.has(employee_id)) catalogo.porEmpleado.set(employee_id, new Set());
         catalogo.porEmpleado.get(employee_id).add(service_id);
@@ -380,6 +386,18 @@
     renderCart();
   });
 
+  async function enviarCorreoDeConfirmacion(sb, idCita) {
+    if (!idCita) return;
+    try {
+      const { error } = await sb.functions.invoke("send-confirmation-email", {
+        body: { appointment_id: idCita },
+      });
+      if (error) console.warn("[Odry's] No se pudo enviar el correo de confirmación:", error);
+    } catch (problema) {
+      console.warn("[Odry's] Falló el envío del correo de confirmación:", problema);
+    }
+  }
+
   function mensajeWhatsapp(datos) {
     const lang = language();
     const labels = copy[lang];
@@ -443,7 +461,7 @@
 
     try {
       const sb = await obtenerCliente();
-      const { error } = await sb.rpc("book_appointment", {
+      const { data: idCita, error } = await sb.rpc("book_appointment", {
         p_employee_id: empleadoId,
         p_client_name: String(data.get("nombre_completo") || ""),
         p_client_email: String(data.get("correo") || ""),
@@ -464,6 +482,11 @@
         actualizarHoras();
         return;
       }
+
+      // El correo de confirmación se manda en segundo plano y a propósito no
+      // bloquea nada: la cita ya quedó guardada, así que un problema con el
+      // proveedor de correo no debe hacerle creer a la clienta que falló.
+      enviarCorreoDeConfirmacion(sb, idCita);
 
       const datos = {
         items,

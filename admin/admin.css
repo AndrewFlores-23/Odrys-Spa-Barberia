@@ -66,6 +66,16 @@ button{font-family:inherit;font-size:inherit}
 .tarjeta-acceso button[type=submit]:hover{background:var(--vino-hondo)}
 .tarjeta-acceso button[type=submit]:disabled{opacity:.55;cursor:not-allowed}
 .tarjeta-acceso .nota{margin:20px 0 0;font-size:.78rem;color:var(--gris);line-height:1.5}
+.enlace-plano{
+  display:block;width:100%;margin-top:14px;background:none;border:0;
+  color:var(--vino);font-size:.8rem;text-decoration:underline;cursor:pointer;padding:4px;
+}
+.enlace-plano:hover{color:var(--vino-hondo)}
+
+#vista-cuenta label{display:block;margin-bottom:14px}
+#vista-cuenta label span{
+  display:block;font-size:.65rem;letter-spacing:.12em;color:var(--gris);margin-bottom:5px;font-weight:600;
+}
 
 input,select,textarea{
   width:100%;padding:11px 12px;border:1px solid var(--linea);border-radius:4px;

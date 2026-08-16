@@ -34,9 +34,27 @@
 
     <p class="aviso-error" id="error-login" role="alert" aria-live="polite"></p>
     <button type="submit">ENTRAR</button>
+    <button type="button" class="enlace-plano" id="btn-olvide">¿Olvidaste tu contraseña?</button>
     <p class="nota">Si te invitaron, abrí el enlace que te llegó por correo para activar tu cuenta.</p>
   </form>
 </section>
+
+<!-- ------------------------------------------- Recuperar contraseña -->
+<dialog id="dialogo-recuperar">
+  <form method="dialog" id="form-recuperar">
+    <h3>Recuperar contraseña</h3>
+    <p class="nota-dialogo">
+      Escribí el correo de tu cuenta. Te enviamos un enlace para definir una
+      contraseña nueva. Abrilo desde el mismo dispositivo o desde el teléfono.
+    </p>
+    <label><span>CORREO</span><input name="email" type="email" autocomplete="username" required></label>
+    <p class="aviso-error" id="error-recuperar" role="alert"></p>
+    <div class="acciones-dialogo">
+      <button type="button" class="boton-plano" data-cerrar>CANCELAR</button>
+      <button type="submit" class="boton-principal">ENVIAR ENLACE</button>
+    </div>
+  </form>
+</dialog>
 
 <!-- ------------------------------------------------ Definir contraseña -->
 <section id="pantalla-clave" class="pantalla-centrada" hidden>
@@ -90,6 +108,7 @@
     <button type="button" data-vista="usuarios" data-solo-admin>USUARIOS</button>
     <button type="button" data-vista="servicios" data-solo-admin>SERVICIOS</button>
     <button type="button" data-vista="ausencias">AUSENCIAS</button>
+    <button type="button" data-vista="cuenta">MI CUENTA</button>
   </nav>
 
   <main>
@@ -173,6 +192,44 @@
         permisos o cualquier rato en que la persona no pueda atender.
       </p>
       <div id="ausencias-lista" class="lista"></div>
+    </section>
+    <!-- ------------------------------------------------------ Mi cuenta -->
+    <section id="vista-cuenta" class="vista" hidden>
+      <div class="encabezado-vista">
+        <h2>Mi cuenta</h2>
+      </div>
+
+      <div class="fila" style="display:block;max-width:520px">
+        <h3 style="margin:0 0 4px">Datos</h3>
+        <p style="margin:0 0 18px;font-size:.85rem;color:var(--gris)">
+          <span id="cuenta-correo"></span> · <span id="cuenta-rol"></span>
+        </p>
+
+        <form id="form-cambiar-clave" novalidate>
+          <h3 style="margin:0 0 4px">Cambiar contraseña</h3>
+          <p style="margin:0 0 16px;font-size:.85rem;color:var(--gris)">
+            Pedimos tu contraseña actual para confirmar que sos vos quien está frente
+            a la pantalla.
+          </p>
+
+          <label><span>CONTRASEÑA ACTUAL</span>
+            <input name="actual" type="password" autocomplete="current-password" required></label>
+          <label><span>NUEVA CONTRASEÑA</span>
+            <input name="nueva" type="password" autocomplete="new-password" minlength="10" required></label>
+          <label><span>REPETIR NUEVA CONTRASEÑA</span>
+            <input name="nueva2" type="password" autocomplete="new-password" minlength="10" required></label>
+
+          <ul class="requisitos" id="requisitos-cambio">
+            <li data-regla="largo">Al menos 10 caracteres</li>
+            <li data-regla="mayus">Una mayúscula</li>
+            <li data-regla="numero">Un número</li>
+            <li data-regla="iguales">Ambas coinciden</li>
+          </ul>
+
+          <p class="aviso-error" id="error-cambiar-clave" role="alert"></p>
+          <button type="submit" class="boton-principal">GUARDAR CONTRASEÑA NUEVA</button>
+        </form>
+      </div>
     </section>
   </main>
 </div>

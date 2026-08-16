@@ -175,6 +175,43 @@ $("#form-login").addEventListener("submit", async (evento) => {
   await arrancar();
 });
 
+// ------------------------------------------------- Olvidé mi contraseña
+const dialogoRecuperar = $("#dialogo-recuperar");
+$("#btn-olvide").addEventListener("click", () => {
+  $("#form-recuperar").reset();
+  $("#error-recuperar").textContent = "";
+  $("#form-recuperar").querySelector("input").value = $("#form-login").email.value;
+  dialogoRecuperar.showModal();
+});
+
+$("#form-recuperar").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const boton = evento.target.querySelector("button[type=submit]");
+  const correo = String(new FormData(evento.target).get("email")).trim().toLowerCase();
+  $("#error-recuperar").textContent = "";
+  boton.disabled = true;
+  boton.textContent = "ENVIANDO…";
+
+  const { error } = await supabase.auth.resetPasswordForEmail(correo, {
+    // Al volver, el enlace trae type=recovery y arrancar() muestra la
+    // pantalla para definir la contraseña nueva.
+    redirectTo: `${location.origin}${location.pathname}`,
+  });
+
+  boton.disabled = false;
+  boton.textContent = "ENVIAR ENLACE";
+
+  if (error) {
+    $("#error-recuperar").textContent = error.message;
+    return;
+  }
+
+  dialogoRecuperar.close();
+  // Se responde igual exista o no la cuenta: decir "ese correo no existe"
+  // revelaría qué direcciones están registradas.
+  avisar("Si ese correo tiene una cuenta, le enviamos el enlace. Revisá tu bandeja y el spam.", "exito");
+});
+
 $("#btn-salir").addEventListener("click", async () => {
   await supabase.auth.signOut();
   location.hash = "";
@@ -272,6 +309,7 @@ $("#pestanas").addEventListener("click", (evento) => {
   if (boton.dataset.vista === "usuarios") cargarUsuarios();
   if (boton.dataset.vista === "servicios") pintarServicios();
   if (boton.dataset.vista === "ausencias") cargarAusencias();
+  if (boton.dataset.vista === "cuenta") pintarCuenta();
 });
 
 async function cargarProfesionalesEnFiltros() {
@@ -618,6 +656,75 @@ $("#servicios-lista").addEventListener("click", async (evento) => {
 
   Object.assign(servicio, cambios);
   avisar(`"${servicio.name_es}" actualizado.`, "exito");
+});
+
+// ----------------------------------------------------------------- Mi cuenta
+async function pintarCuenta() {
+  const { data: { user } } = await supabase.auth.getUser();
+  $("#cuenta-correo").textContent = user?.email ?? "—";
+  $("#cuenta-rol").textContent = ROLES[sesionPerfil.role] ?? sesionPerfil.role;
+}
+
+const formCambiarClave = $("#form-cambiar-clave");
+
+formCambiarClave.addEventListener("input", () => {
+  const datos = new FormData(formCambiarClave);
+  const estado = reglasClave(String(datos.get("nueva")), String(datos.get("nueva2")));
+  $$("#requisitos-cambio li").forEach((li) => {
+    li.classList.toggle("cumple", estado[li.dataset.regla]);
+  });
+});
+
+formCambiarClave.addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const boton = evento.target.querySelector("button[type=submit]");
+  const datos = new FormData(evento.target);
+  const actual = String(datos.get("actual"));
+  const nueva = String(datos.get("nueva"));
+  const error = $("#error-cambiar-clave");
+  error.textContent = "";
+
+  if (!Object.values(reglasClave(nueva, String(datos.get("nueva2")))).every(Boolean)) {
+    error.textContent = "La contraseña nueva no cumple todos los requisitos.";
+    return;
+  }
+  if (nueva === actual) {
+    error.textContent = "La contraseña nueva tiene que ser distinta de la actual.";
+    return;
+  }
+
+  boton.disabled = true;
+  boton.textContent = "GUARDANDO…";
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Se revalida la contraseña actual antes de cambiarla. Sin esto, cualquiera
+  // que encuentre una sesión abierta podría apoderarse de la cuenta.
+  const { error: errorClaveActual } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: actual,
+  });
+
+  if (errorClaveActual) {
+    error.textContent = "La contraseña actual no es correcta.";
+    boton.disabled = false;
+    boton.textContent = "GUARDAR CONTRASEÑA NUEVA";
+    return;
+  }
+
+  const { error: errorCambio } = await supabase.auth.updateUser({ password: nueva });
+  boton.disabled = false;
+  boton.textContent = "GUARDAR CONTRASEÑA NUEVA";
+
+  if (errorCambio) {
+    error.textContent = errorCambio.message;
+    return;
+  }
+
+  await supabase.rpc("marcar_contrasena_actualizada");
+  formCambiarClave.reset();
+  $$("#requisitos-cambio li").forEach((li) => li.classList.remove("cumple"));
+  avisar("Contraseña actualizada.", "exito");
 });
 
 // ----------------------------------------------------------------- Ausencias
