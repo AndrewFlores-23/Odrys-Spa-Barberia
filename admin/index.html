@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Panel · Odry's Beauty Spa &amp; Barber</title>
+  <link rel="icon" href="../assets/images/odrys-logo.png">
+  <link rel="stylesheet" href="admin.css?v=20260816-1">
+</head>
+<body>
+
+<!-- Estado inicial mientras se resuelve si hay sesión abierta. -->
+<div id="pantalla-cargando" class="pantalla-centrada">
+  <div class="cargando"><span></span><span></span><span></span></div>
+  <p>Cargando…</p>
+</div>
+
+<!-- ---------------------------------------------------------------- Login -->
+<section id="pantalla-login" class="pantalla-centrada" hidden>
+  <form class="tarjeta-acceso" id="form-login" novalidate>
+    <img src="../assets/images/odrys-logo.png" alt="Odry's" class="marca">
+    <h1>Panel de administración</h1>
+    <p class="sub">Odry's Beauty Spa &amp; Barber</p>
+
+    <label>
+      <span>CORREO</span>
+      <input name="email" type="email" autocomplete="username" required>
+    </label>
+    <label>
+      <span>CONTRASEÑA</span>
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+
+    <p class="aviso-error" id="error-login" role="alert" aria-live="polite"></p>
+    <button type="submit">ENTRAR</button>
+    <p class="nota">Si te invitaron, abrí el enlace que te llegó por correo para activar tu cuenta.</p>
+  </form>
+</section>
+
+<!-- ------------------------------------------------ Definir contraseña -->
+<section id="pantalla-clave" class="pantalla-centrada" hidden>
+  <form class="tarjeta-acceso" id="form-clave" novalidate>
+    <img src="../assets/images/odrys-logo.png" alt="Odry's" class="marca">
+    <h1 id="titulo-clave">Definí tu contraseña</h1>
+    <p class="sub" id="sub-clave">Elegí una clave propia para entrar al sistema.</p>
+
+    <label>
+      <span>NUEVA CONTRASEÑA</span>
+      <input name="password" type="password" autocomplete="new-password" minlength="10" required>
+    </label>
+    <label>
+      <span>REPETIR CONTRASEÑA</span>
+      <input name="password2" type="password" autocomplete="new-password" minlength="10" required>
+    </label>
+
+    <ul class="requisitos" id="requisitos-clave">
+      <li data-regla="largo">Al menos 10 caracteres</li>
+      <li data-regla="mayus">Una mayúscula</li>
+      <li data-regla="numero">Un número</li>
+      <li data-regla="iguales">Ambas coinciden</li>
+    </ul>
+
+    <p class="aviso-error" id="error-clave" role="alert" aria-live="polite"></p>
+    <button type="submit">GUARDAR CONTRASEÑA</button>
+  </form>
+</section>
+
+<!-- ---------------------------------------------------------------- Panel -->
+<div id="panel" hidden>
+  <header class="barra">
+    <div class="barra-marca">
+      <img src="../assets/images/odrys-logo.png" alt="">
+      <div>
+        <strong>ODRY'S</strong>
+        <small>PANEL</small>
+      </div>
+    </div>
+    <div class="barra-usuario">
+      <div class="quien">
+        <b id="usuario-nombre"></b>
+        <span id="usuario-rol" class="etiqueta-rol"></span>
+      </div>
+      <button type="button" id="btn-salir" class="boton-plano">SALIR</button>
+    </div>
+  </header>
+
+  <nav class="pestanas" id="pestanas">
+    <button type="button" class="activa" data-vista="agenda">AGENDA</button>
+    <button type="button" data-vista="usuarios" data-solo-admin>USUARIOS</button>
+    <button type="button" data-vista="servicios" data-solo-admin>SERVICIOS</button>
+    <button type="button" data-vista="ausencias">AUSENCIAS</button>
+  </nav>
+
+  <main>
+    <!-- ------------------------------------------------------- Agenda -->
+    <section id="vista-agenda" class="vista">
+      <div class="encabezado-vista">
+        <h2>Agenda</h2>
+        <div class="filtros">
+          <label class="filtro">
+            <span>DESDE</span>
+            <input type="date" id="agenda-desde">
+          </label>
+          <label class="filtro">
+            <span>HASTA</span>
+            <input type="date" id="agenda-hasta">
+          </label>
+          <label class="filtro" id="filtro-profesional-envoltura">
+            <span>PROFESIONAL</span>
+            <select id="agenda-profesional"><option value="">Todos</option></select>
+          </label>
+          <label class="filtro">
+            <span>ESTADO</span>
+            <select id="agenda-estado">
+              <option value="">Todos</option>
+              <option value="confirmada">Confirmada</option>
+              <option value="completada">Completada</option>
+              <option value="cancelada">Cancelada</option>
+              <option value="no_show">No se presentó</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <p class="resumen" id="agenda-resumen"></p>
+      <div id="agenda-lista" class="lista"></div>
+    </section>
+
+    <!-- ----------------------------------------------------- Usuarios -->
+    <section id="vista-usuarios" class="vista" hidden>
+      <div class="encabezado-vista">
+        <h2>Usuarios</h2>
+        <button type="button" class="boton-principal" id="btn-invitar">+ INVITAR PERSONA</button>
+      </div>
+      <p class="explicacion">
+        Al invitar a alguien se le envía un correo de confirmación. La cuenta permanece
+        bloqueada hasta que esa persona abra el enlace y defina su propia contraseña.
+        El rol decide qué servicios puede ofrecer.
+      </p>
+      <div id="usuarios-lista" class="lista"></div>
+    </section>
+
+    <!-- ---------------------------------------------------- Servicios -->
+    <section id="vista-servicios" class="vista" hidden>
+      <div class="encabezado-vista">
+        <h2>Servicios</h2>
+        <div class="filtros">
+          <label class="filtro">
+            <span>CATEGORÍA</span>
+            <select id="servicios-categoria">
+              <option value="">Todas</option>
+              <option value="barberia">Barbería</option>
+              <option value="spa">Spa</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <p class="explicacion">
+        El precio y la duración que se guarden acá son los que verá la clienta en la web
+        y los que usa el sistema para calcular las horas libres.
+      </p>
+      <div id="servicios-lista" class="lista"></div>
+    </section>
+
+    <!-- ---------------------------------------------------- Ausencias -->
+    <section id="vista-ausencias" class="vista" hidden>
+      <div class="encabezado-vista">
+        <h2>Ausencias y bloqueos</h2>
+        <button type="button" class="boton-principal" id="btn-ausencia">+ BLOQUEAR HORARIO</button>
+      </div>
+      <p class="explicacion">
+        Un bloqueo retira esas horas de la agenda pública. Sirve para vacaciones,
+        permisos o cualquier rato en que la persona no pueda atender.
+      </p>
+      <div id="ausencias-lista" class="lista"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ------------------------------------------------------------- Diálogos -->
+<dialog id="dialogo-invitar">
+  <form method="dialog" id="form-invitar">
+    <h3>Invitar a una persona</h3>
+    <label><span>NOMBRE COMPLETO</span><input name="full_name" type="text" required></label>
+    <label><span>CORREO (GMAIL U OTRO)</span><input name="email" type="email" required></label>
+    <label>
+      <span>ROL</span>
+      <select name="role" required>
+        <option value="barbero">Barbero</option>
+        <option value="estilista">Estilista</option>
+        <option value="masajista">Masajista</option>
+        <option value="administrador">Administrador</option>
+      </select>
+    </label>
+    <p class="nota-dialogo">
+      Recibirá un correo para confirmar su cuenta y elegir su contraseña. No podrá
+      entrar hasta hacerlo.
+    </p>
+    <p class="aviso-error" id="error-invitar" role="alert"></p>
+    <div class="acciones-dialogo">
+      <button type="button" class="boton-plano" data-cerrar>CANCELAR</button>
+      <button type="submit" class="boton-principal">ENVIAR INVITACIÓN</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dialogo-servicios">
+  <form method="dialog" id="form-servicios-empleado">
+    <h3 id="titulo-servicios-empleado">Servicios asignados</h3>
+    <p class="nota-dialogo" id="nota-servicios-empleado"></p>
+    <div id="lista-servicios-empleado" class="casillas"></div>
+    <p class="aviso-error" id="error-servicios-empleado" role="alert"></p>
+    <div class="acciones-dialogo">
+      <button type="button" class="boton-plano" data-cerrar>CANCELAR</button>
+      <button type="submit" class="boton-principal">GUARDAR</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dialogo-ausencia">
+  <form method="dialog" id="form-ausencia">
+    <h3>Bloquear un horario</h3>
+    <label><span>PROFESIONAL</span><select name="employee_id" id="ausencia-profesional" required></select></label>
+    <label><span>DESDE</span><input name="starts_at" type="datetime-local" required></label>
+    <label><span>HASTA</span><input name="ends_at" type="datetime-local" required></label>
+    <label><span>MOTIVO</span><input name="reason" type="text" placeholder="Vacaciones, permiso…"></label>
+    <p class="aviso-error" id="error-ausencia" role="alert"></p>
+    <div class="acciones-dialogo">
+      <button type="button" class="boton-plano" data-cerrar>CANCELAR</button>
+      <button type="submit" class="boton-principal">BLOQUEAR</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="avisos" class="avisos" aria-live="polite"></div>
+
+<script src="../assets/js/odrys-config.js?v=20260816-1"></script>
+<script type="module" src="panel.js?v=20260816-1"></script>
+</body>
+</html>
