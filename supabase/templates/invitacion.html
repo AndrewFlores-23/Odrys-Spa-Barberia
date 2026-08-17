@@ -1,0 +1,94 @@
+<!-- Plantilla del correo de invitación al personal.
+     Se pega en Supabase: Authentication → Emails → Templates → Invite user.
+
+     Está armada con tablas y estilos en línea a propósito: Gmail y Outlook
+     descartan las hojas de estilo y no soportan flexbox ni grid. Lo que en una
+     web sería una mala práctica, en un correo es la única forma de que se vea
+     igual en todos lados. -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;padding:0;background-color:#f6f2ee;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border:1px solid #e6ddd6;border-radius:6px;overflow:hidden;">
+
+        <!-- Encabezado -->
+        <tr>
+          <td align="center" style="background-color:#471a33;padding:32px 24px 26px;">
+            <img src="https://odrysbeautyspa.com/assets/images/odrys-logo.png"
+                 width="72" height="72" alt="Odry's Beauty Spa &amp; Barber"
+                 style="display:block;border:0;outline:none;text-decoration:none;">
+            <div style="margin-top:14px;font-family:Georgia,'Times New Roman',serif;font-size:19px;letter-spacing:.06em;color:#ffffff;">
+              ODRY'S
+            </div>
+            <div style="margin-top:5px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:.22em;color:#c7a15a;">
+              BEAUTY SPA &amp; BARBER
+            </div>
+          </td>
+        </tr>
+
+        <!-- Cuerpo -->
+        <tr>
+          <td style="padding:34px 32px 12px;font-family:Arial,Helvetica,sans-serif;color:#20201d;">
+            <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:normal;color:#6b294d;">
+              Te sumaron al equipo
+            </h1>
+            <p style="margin:0 0 14px;font-size:15px;line-height:1.6;color:#3f3a3c;">
+              Se creó tu cuenta en el sistema de reservas de Odry's. Desde el panel vas a poder
+              ver tu agenda, definir tu horario de atención y marcar tus días libres.
+            </p>
+            <p style="margin:0 0 26px;font-size:15px;line-height:1.6;color:#3f3a3c;">
+              Para activarla, elegí tu contraseña:
+            </p>
+          </td>
+        </tr>
+
+        <!-- Botón. El relleno va en el enlace, no en la celda: Outlook ignora
+             el padding de la celda y el botón quedaría del tamaño del texto. -->
+        <tr>
+          <td align="center" style="padding:0 32px 30px;">
+            <a href="{{ .ConfirmationURL }}"
+               style="display:inline-block;background-color:#6b294d;color:#ffffff;text-decoration:none;
+                      font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;letter-spacing:.14em;
+                      padding:16px 34px;border-radius:4px;">
+              ACTIVAR MI CUENTA
+            </a>
+          </td>
+        </tr>
+
+        <!-- Enlace de reserva: algunos clientes de correo no permiten pulsar botones -->
+        <tr>
+          <td style="padding:0 32px 28px;font-family:Arial,Helvetica,sans-serif;">
+            <p style="margin:0 0 7px;font-size:12px;color:#7a7278;">
+              Si el botón no funciona, copiá esta dirección en tu navegador:
+            </p>
+            <p style="margin:0;font-size:12px;line-height:1.5;word-break:break-all;">
+              <a href="{{ .ConfirmationURL }}" style="color:#9b7433;">{{ .ConfirmationURL }}</a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Pie -->
+        <tr>
+          <td style="padding:20px 32px 26px;border-top:1px solid #eee6e0;font-family:Arial,Helvetica,sans-serif;">
+            <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:#7a7278;">
+              Este enlace caduca en 24 horas. Si no lo usás a tiempo, pedile a la administración
+              que te reenvíe la invitación.
+            </p>
+            <p style="margin:0;font-size:12px;line-height:1.6;color:#7a7278;">
+              Si no esperabas este correo, podés ignorarlo: la cuenta no se activa sola.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="background-color:#faf7f4;padding:16px 24px;font-family:Arial,Helvetica,sans-serif;">
+            <p style="margin:0;font-size:11px;letter-spacing:.08em;color:#9c9298;">
+              ODRY'S BEAUTY SPA &amp; BARBER · TAMARINDO, GUANACASTE
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>

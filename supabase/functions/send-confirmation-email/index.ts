@@ -109,6 +109,8 @@ Deno.serve(async (req) => {
       timeZone: "America/Costa_Rica",
     }).format(new Date(appointment.starts_at));
 
+    // Cada servicio como fila de tabla: los clientes de correo no respetan
+    // listas con estilos, pero sí las tablas.
     const services = (appointment.appointment_services || [])
       .map((item: any) => {
         // El nombre en inglés es opcional: si no se cargó, se muestra el español
@@ -116,7 +118,15 @@ Deno.serve(async (req) => {
         const name = lang === "en"
           ? (item.services?.name_en || item.services?.name_es)
           : item.services?.name_es;
-        return `<li>${item.quantity} × ${name}</li>`;
+        const linea = (item.price_at_booking || 0) * item.quantity;
+        return `<tr>
+          <td style="padding:9px 0;border-bottom:1px solid #eee6e0;font-size:14px;color:#3f3a3c;">
+            ${item.quantity} &times; ${name}
+          </td>
+          <td align="right" style="padding:9px 0;border-bottom:1px solid #eee6e0;font-size:14px;color:#3f3a3c;white-space:nowrap;">
+            ${linea > 0 ? `$${linea.toFixed(2)}` : "&mdash;"}
+          </td>
+        </tr>`;
       })
       .join("");
 
@@ -127,19 +137,67 @@ Deno.serve(async (req) => {
 
     const employeeName = appointment.profiles?.full_name || "";
 
+    // Maquetado con tablas y estilos en línea: Gmail y Outlook descartan las
+    // hojas de estilo y no soportan flexbox ni grid.
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color:#1a1a1a;">
-        <h2>${businessName}</h2>
-        <p>${t.greeting(appointment.client_name)}</p>
-        <p>${t.intro}</p>
-        <p><strong>${t.withLabel}:</strong> ${employeeName}</p>
-        <p><strong>${t.whenLabel}:</strong> ${when}</p>
-        <p><strong>${t.servicesLabel}:</strong></p>
-        <ul>${services}</ul>
-        ${total > 0 ? `<p><strong>${t.totalLabel}:</strong> $${total.toFixed(2)}</p>` : ""}
-        <p style="margin-top:24px; font-size:14px; color:#555;">${t.footer}</p>
-      </div>
-    `;
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;padding:0;background-color:#f6f2ee;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border:1px solid #e6ddd6;border-radius:6px;overflow:hidden;">
+
+      <tr><td align="center" style="background-color:#471a33;padding:32px 24px 26px;">
+        <img src="https://odrysbeautyspa.com/assets/images/odrys-logo.png" width="72" height="72"
+             alt="${businessName}" style="display:block;border:0;outline:none;text-decoration:none;">
+        <div style="margin-top:14px;font-family:Georgia,'Times New Roman',serif;font-size:19px;letter-spacing:.06em;color:#ffffff;">ODRY'S</div>
+        <div style="margin-top:5px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:.22em;color:#c7a15a;">BEAUTY SPA &amp; BARBER</div>
+      </td></tr>
+
+      <tr><td style="padding:34px 32px 6px;font-family:Arial,Helvetica,sans-serif;">
+        <h1 style="margin:0 0 14px;font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:normal;color:#6b294d;">
+          ${t.subject(businessName)}
+        </h1>
+        <p style="margin:0 0 6px;font-size:15px;line-height:1.6;color:#3f3a3c;">${t.greeting(appointment.client_name)}</p>
+        <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#3f3a3c;">${t.intro}</p>
+      </td></tr>
+
+      <tr><td style="padding:0 32px 8px;font-family:Arial,Helvetica,sans-serif;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="background-color:#faf7f4;border-left:3px solid #c7a15a;border-radius:3px;">
+          <tr><td style="padding:16px 18px;">
+            <div style="font-size:9px;letter-spacing:.14em;color:#9c9298;font-weight:bold;">${t.whenLabel.toUpperCase()}</div>
+            <div style="margin-top:4px;font-size:16px;color:#20201d;text-transform:capitalize;">${when}</div>
+            <div style="margin-top:14px;font-size:9px;letter-spacing:.14em;color:#9c9298;font-weight:bold;">${t.withLabel.toUpperCase()}</div>
+            <div style="margin-top:4px;font-size:16px;color:#20201d;">${employeeName}</div>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <tr><td style="padding:24px 32px 0;font-family:Arial,Helvetica,sans-serif;">
+        <div style="font-size:9px;letter-spacing:.14em;color:#9c9298;font-weight:bold;margin-bottom:6px;">${t.servicesLabel.toUpperCase()}</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${services}</table>
+        ${total > 0 ? `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding:13px 0 0;font-size:14px;font-weight:bold;color:#20201d;">${t.totalLabel}</td>
+            <td align="right" style="padding:13px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:21px;color:#6b294d;">$${total.toFixed(2)}</td>
+          </tr>
+        </table>` : ""}
+      </td></tr>
+
+      <tr><td style="padding:26px 32px 26px;font-family:Arial,Helvetica,sans-serif;">
+        <p style="margin:0;padding-top:18px;border-top:1px solid #eee6e0;font-size:13px;line-height:1.6;color:#7a7278;">
+          ${t.footer}
+        </p>
+      </td></tr>
+
+      <tr><td align="center" style="background-color:#faf7f4;padding:16px 24px;font-family:Arial,Helvetica,sans-serif;">
+        <p style="margin:0;font-size:11px;letter-spacing:.08em;color:#9c9298;">
+          ODRY'S BEAUTY SPA &amp; BARBER &middot; TAMARINDO, GUANACASTE &middot; +506 6218-0804
+        </p>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>`;
 
     const resendResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
