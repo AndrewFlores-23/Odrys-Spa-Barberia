@@ -50,8 +50,8 @@ const paginas = [
       "Spa y barbería en Tamarindo, Guanacaste. Masajes, manicure, pedicure, depilación, "
       + "cortes de cabello y barba. Atención en el local o a domicilio en tu villa. "
       + "Abierto todos los días de 9 a. m. a 7 p. m.",
-    imagen: `${SITIO}/assets/images/tamarindo-aerea-atardecer.webp`,
-    imagenAlt: "Vista aérea de Playa Tamarindo al atardecer con el logo de Odry's",
+    imagen: `${SITIO}/assets/images/og-inicio.jpg`,
+    imagenAlt: "Odry's Beauty Spa & Barber en Tamarindo: spa y barbería en un mismo lugar",
     tipo: "HealthAndBeautyBusiness",
   },
   {
@@ -63,8 +63,8 @@ const paginas = [
     descripcion:
       "Spa y barbería en Tamarindo, Guanacaste. Masajes, manicure, pedicure, depilación, "
       + "cortes de cabello y barba. Atención en el local o a domicilio en tu villa.",
-    imagen: `${SITIO}/assets/images/tamarindo-aerea-atardecer.webp`,
-    imagenAlt: "Vista aérea de Playa Tamarindo al atardecer con el logo de Odry's",
+    imagen: `${SITIO}/assets/images/og-inicio.jpg`,
+    imagenAlt: "Odry's Beauty Spa & Barber en Tamarindo: spa y barbería en un mismo lugar",
     tipo: null,
     sinSitemap: true,
   },
@@ -75,8 +75,8 @@ const paginas = [
     descripcion:
       "Barbería en Tamarindo, Guanacaste: cortes clásicos, fade, perfilado de barba, "
       + "coloración y trenzas. Reservá tu cita en línea y elegí con qué profesional atenderte.",
-    imagen: `${SITIO}/assets/images/barber-clipper-nuca-edited.webp`,
-    imagenAlt: "Barbero perfilando un degradado en la barbería de Odry's en Tamarindo",
+    imagen: `${SITIO}/assets/images/og-barberia.jpg`,
+    imagenAlt: "Barbería y estilismo de Odry's en Tamarindo, Guanacaste",
     tipo: "HairSalon",
     servicios: [
       "Corte de cabello para hombre", "Fade y diseño", "Perfilado de barba",
@@ -91,8 +91,8 @@ const paginas = [
       "Spa en Tamarindo, Guanacaste: masaje sueco, tejido profundo, piedras calientes, "
       + "manicure y pedicure en gel, depilación y exfoliación. Servicio en el local o "
       + "a domicilio en villas y residencias.",
-    imagen: `${SITIO}/assets/images/massage-poolside-edited.webp`,
-    imagenAlt: "Masaje a domicilio junto a la piscina de una villa en Tamarindo",
+    imagen: `${SITIO}/assets/images/og-spa.jpg`,
+    imagenAlt: "Spa de Odry's en Tamarindo: masajes, manicure y pedicure",
     tipo: "DaySpa",
     servicios: [
       "Masaje sueco relajante", "Masaje de tejido profundo", "Masaje con piedras calientes",
@@ -173,6 +173,12 @@ function bloqueSeo(pagina) {
     `<meta property="og:description" content="${escapar(pagina.descripcion)}">`,
     `<meta property="og:url" content="${url}">`,
     `<meta property="og:image" content="${pagina.imagen}">`,
+    // Declarar tipo y medidas deja que WhatsApp y Facebook dibujen la vista
+    // previa antes de terminar de descargar la imagen. Sin esto, muchas veces
+    // el enlace se comparte sin miniatura la primera vez.
+    '<meta property="og:image:type" content="image/jpeg">',
+    '<meta property="og:image:width" content="1200">',
+    '<meta property="og:image:height" content="630">',
     `<meta property="og:image:alt" content="${escapar(pagina.imagenAlt)}">`,
     '<meta name="twitter:card" content="summary_large_image">',
     `<meta name="twitter:title" content="${escapar(pagina.titulo)}">`,

@@ -49,3 +49,8 @@ next-env.d.ts
 # Carpetas temporales de trabajo
 /tmp/
 /_site/
+
+# Carpetas que crean los editores al abrir archivos del proyecto
+.vs/
+.idea/
+.vscode/
