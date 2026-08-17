@@ -1,8 +1,14 @@
 # Cabeceras de seguridad. Cloudflare las aplica a todo lo que sirve.
 #
-# El sitio carga exactamente dos orígenes externos: cdn.jsdelivr.net (la
-# librería de Supabase) y el proyecto de Supabase (la API). Todo lo demás es
-# propio, así que la política puede ser estricta.
+# Orígenes externos que el sitio necesita de verdad:
+#   cdn.jsdelivr.net      la librería de Supabase
+#   *.supabase.co         la API
+#   fonts.googleapis.com  la hoja de la tipografía Marcellus, importada en la
+#                         primera línea de odrys-mockup.css
+#   fonts.gstatic.com     los archivos de esa tipografía
+#   cloudflareinsights    las estadísticas que Cloudflare inyecta solo
+#
+# Cualquier cosa fuera de esta lista queda bloqueada por el navegador.
 
 /*
   # Obliga a HTTPS durante un año, incluso si alguien teclea http://
@@ -25,7 +31,7 @@
 
   # De dónde puede cargar cada tipo de recurso. Lo que no esté acá, el
   # navegador lo bloquea aunque alguien logre inyectar una etiqueta.
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://jwfxqkoetxkoubuczvyj.supabase.co https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://static.cloudflareinsights.com; connect-src 'self' https://jwfxqkoetxkoubuczvyj.supabase.co https://cdn.jsdelivr.net https://cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
 
 # El panel no debe aparecer nunca en un buscador.
 /admin/*
