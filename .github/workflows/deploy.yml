@@ -25,18 +25,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Se publica solo el sitio público. El andamiaje de Next/Cloudflare y las
-      # migraciones de la base quedan versionados pero fuera de lo publicado.
+      # El mismo script que usa Cloudflare Pages, para que los dos despliegues
+      # publiquen exactamente lo mismo y no puedan divergir.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Armar carpeta de publicación
-        run: |
-          mkdir -p _site
-          cp index.html odrys-mockup.html barberia.html spa.html _site/
-          cp odrys-mockup.css idioma.js novedades.js experiencias.js reservas.js _site/
-          cp robots.txt sitemap.xml _site/
-          cp -r assets _site/
-          if [ -d admin ]; then cp -r admin _site/; fi
-          # Evita que Pages procese el sitio con Jekyll y descarte carpetas con guion bajo.
-          touch _site/.nojekyll
+        run: node tools/build-site.mjs
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
