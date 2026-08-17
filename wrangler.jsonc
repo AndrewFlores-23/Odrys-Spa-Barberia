@@ -1,0 +1,22 @@
+{
+  // Configuración de despliegue en Cloudflare.
+  //
+  // Existe para que el despliegue no dependa de lo que Cloudflare adivine ni
+  // de campos del panel, que cambian de lugar entre versiones. Acá queda
+  // escrito qué se publica, versionado junto al código.
+  //
+  // El sitio es estático: no hay código de servidor. Todo el backend vive en
+  // Supabase, así que este Worker solo sirve archivos.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "odrys-spa-barberia",
+  "compatibility_date": "2026-08-17",
+
+  // La carpeta la arma tools/build-site.mjs, que copia solo el sitio real y
+  // deja fuera el andamiaje de Next.js que quedó sin usar en la raíz.
+  "assets": {
+    "directory": "./_site",
+    // El sitio tiene rutas propias (/admin/, /spa.html): 404.html no aplica,
+    // se sirve el archivo tal cual y si no existe, un 404 normal.
+    "not_found_handling": "none"
+  }
+}
