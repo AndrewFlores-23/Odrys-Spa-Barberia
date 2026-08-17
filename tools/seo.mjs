@@ -13,7 +13,7 @@ import { join, resolve } from "node:path";
 
 const raiz = resolve(import.meta.dirname, "..");
 
-const SITIO = "https://andrewflores-23.github.io/Odrys-Spa-Barberia";
+const SITIO = "https://odrysbeautyspa.com";
 const NEGOCIO = "Odry's Beauty Spa & Barber";
 const TELEFONO = "+50662180804";
 const LOGO = `${SITIO}/assets/images/odrys-logo.png`;

@@ -10,26 +10,40 @@ const URL_SUPABASE = Deno.env.get("SUPABASE_URL")!;
 const CLAVE_ANONIMA = Deno.env.get("SUPABASE_ANON_KEY")!;
 const CLAVE_SERVICIO = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 // A dónde vuelve la persona tras confirmar el correo desde su teléfono.
-// El valor por defecto apunta al sitio publicado; la variable ODRYS_URL_PANEL
-// permite cambiarlo sin volver a desplegar (por ejemplo, a un dominio propio).
 // Esta URL debe estar además en la lista de redirecciones permitidas de
 // Supabase (Authentication → URL Configuration) o el enlace del correo falla.
 const DESTINO_INVITACION = Deno.env.get("ODRYS_URL_PANEL")
-  ?? "https://andrewflores-23.github.io/Odrys-Spa-Barberia/admin/";
+  ?? "https://odrysbeautyspa.com/admin/";
 
 const ROLES_VALIDOS = ["administrador", "barbero", "estilista", "masajista"];
 
-const cabeceras = {
-  "Access-Control-Allow-Origin": Deno.env.get("ODRYS_ORIGEN_PERMITIDO") ?? "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Content-Type": "application/json",
-};
+// Antes se respondía con "*", que deja a cualquier sitio invocar esta función
+// desde el navegador de una administradora con sesión abierta. Ahora se
+// devuelve el origen solo si está en la lista. Se incluye el dominio de
+// workers.dev porque el panel sigue accesible ahí mientras se propaga el DNS.
+const ORIGENES_PERMITIDOS = (
+  Deno.env.get("ODRYS_ORIGENES_PERMITIDOS") ??
+  "https://odrysbeautyspa.com,https://www.odrysbeautyspa.com,https://odrys-spa-barberia.beautyspaodrys.workers.dev,http://localhost:4321"
+).split(",").map((o) => o.trim()).filter(Boolean);
 
-const responder = (estado: number, cuerpo: unknown) =>
-  new Response(JSON.stringify(cuerpo), { status: estado, headers: cabeceras });
+function cabecerasPara(peticion: Request) {
+  const origen = peticion.headers.get("Origin") ?? "";
+  return {
+    "Access-Control-Allow-Origin": ORIGENES_PERMITIDOS.includes(origen) ? origen : ORIGENES_PERMITIDOS[0],
+    // Sin Vary, una caché intermedia podría servirle a un origen la respuesta
+    // que se generó para otro.
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Content-Type": "application/json",
+  };
+}
 
 Deno.serve(async (peticion) => {
+  const cabeceras = cabecerasPara(peticion);
+  const responder = (estado: number, cuerpo: unknown) =>
+    new Response(JSON.stringify(cuerpo), { status: estado, headers: cabeceras });
+
   if (peticion.method === "OPTIONS") return new Response("ok", { headers: cabeceras });
   if (peticion.method !== "POST") return responder(405, { error: "Método no permitido." });
 

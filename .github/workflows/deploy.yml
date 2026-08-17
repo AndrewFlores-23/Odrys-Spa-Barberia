@@ -1,9 +1,14 @@
-name: Publicar sitio
+name: Publicar sitio (respaldo)
 
-# Cada push a main vuelve a publicar el sitio en GitHub Pages.
+# El sitio se publica desde Cloudflare, que despliega solo con cada push.
+# Este flujo queda como respaldo manual: si Cloudflare fallara, se puede
+# lanzar a mano desde la pestaña Actions y GitHub Pages vuelve a servir.
+#
+# Se quitó el disparo automático a propósito. Con los dos activos había el
+# mismo sitio publicado en dos direcciones, y las URL canónicas apuntan a
+# odrysbeautyspa.com: dejar GitHub Pages sirviendo en paralelo confunde a
+# los buscadores sin aportar nada.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,7 +16,6 @@ permissions:
   pages: write
   id-token: write
 
-# Si se empujan dos cambios seguidos, se publica el último y se cancela el anterior.
 concurrency:
   group: pages
   cancel-in-progress: true
@@ -25,8 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # El mismo script que usa Cloudflare Pages, para que los dos despliegues
-      # publiquen exactamente lo mismo y no puedan divergir.
+      # El mismo script que usa Cloudflare, para que ambos publiquen lo mismo.
       - uses: actions/setup-node@v4
         with:
           node-version: 22

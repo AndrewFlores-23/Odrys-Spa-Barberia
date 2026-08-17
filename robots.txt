@@ -4,4 +4,4 @@ Allow: /
 # El panel administrativo no debe indexarse.
 Disallow: /admin/
 
-Sitemap: https://andrewflores-23.github.io/Odrys-Spa-Barberia/sitemap.xml
+Sitemap: https://odrysbeautyspa.com/sitemap.xml
