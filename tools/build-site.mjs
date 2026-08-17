@@ -26,6 +26,8 @@ const ARCHIVOS = [
   "reservas.js",
   "robots.txt",
   "sitemap.xml",
+  // Cabeceras de seguridad que aplica Cloudflare al servir el sitio.
+  "_headers",
 ];
 
 const CARPETAS = ["assets", "admin"];

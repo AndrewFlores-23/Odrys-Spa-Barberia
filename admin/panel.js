@@ -162,6 +162,77 @@ async function arrancar() {
 // salón la computadora suele ser compartida.
 const CLAVE_CORREO_RECORDADO = "odrys-correo-recordado";
 
+// ---------------------------------------------------------------- Intentos
+// Freno a la fuerza bruta desde la propia pantalla.
+//
+// Honestidad sobre su alcance: esto vive en el navegador, así que solo detiene
+// a quien pruebe contraseñas usando el formulario. Alguien que llame a la API
+// de Supabase directamente se lo salta. La barrera de verdad es el límite por
+// IP de Supabase (30 intentos cada 5 minutos). Esto suma una capa contra el
+// caso realista —alguien probando claves en la computadora del salón— y le
+// avisa a la persona que algo raro pasa.
+const CLAVE_INTENTOS = "odrys-intentos-login";
+const INTENTOS_MAXIMOS = 5;
+const BLOQUEO_MINUTOS = 15;
+
+function leerIntentos() {
+  try { return JSON.parse(localStorage.getItem(CLAVE_INTENTOS) ?? "null") ?? { fallos: 0, hasta: 0 }; }
+  catch (_) { return { fallos: 0, hasta: 0 }; }
+}
+
+function guardarIntentos(estado) {
+  try { localStorage.setItem(CLAVE_INTENTOS, JSON.stringify(estado)); } catch (_) { /* modo privado */ }
+}
+
+function segundosDeEspera() {
+  const { hasta } = leerIntentos();
+  return hasta > Date.now() ? Math.ceil((hasta - Date.now()) / 1000) : 0;
+}
+
+// Espera creciente antes del bloqueo: 2, 4, 8… segundos. Vuelve costoso
+// probar en cadena sin molestar a quien simplemente se equivocó una vez.
+function esperaTrasFallo(fallos) {
+  return fallos < 2 ? 0 : Math.min(2 ** (fallos - 1), 30) * 1000;
+}
+
+let temporizadorBloqueo = null;
+function reflejarBloqueo() {
+  const boton = $("#form-login").querySelector("button[type=submit]");
+  const restante = segundosDeEspera();
+
+  if (restante <= 0) {
+    boton.disabled = false;
+    boton.textContent = "ENTRAR";
+    if (temporizadorBloqueo) { clearInterval(temporizadorBloqueo); temporizadorBloqueo = null; }
+    return;
+  }
+
+  boton.disabled = true;
+  const minutos = Math.floor(restante / 60);
+  const segundos = String(restante % 60).padStart(2, "0");
+  boton.textContent = `BLOQUEADO ${minutos}:${segundos}`;
+  $("#error-login").textContent =
+    `Demasiados intentos fallidos. Esperá ${minutos > 0 ? `${minutos} min` : `${segundos} s`} antes de volver a probar.`;
+
+  if (!temporizadorBloqueo) temporizadorBloqueo = setInterval(reflejarBloqueo, 1000);
+}
+
+function registrarFallo() {
+  const estado = leerIntentos();
+  estado.fallos += 1;
+  if (estado.fallos >= INTENTOS_MAXIMOS) {
+    estado.hasta = Date.now() + BLOQUEO_MINUTOS * 60 * 1000;
+    estado.fallos = 0;
+  }
+  guardarIntentos(estado);
+  reflejarBloqueo();
+}
+
+function limpiarIntentos() {
+  guardarIntentos({ fallos: 0, hasta: 0 });
+  reflejarBloqueo();
+}
+
 (function precargarCorreo() {
   try {
     const guardado = localStorage.getItem(CLAVE_CORREO_RECORDADO);
@@ -173,8 +244,12 @@ const CLAVE_CORREO_RECORDADO = "odrys-correo-recordado";
   } catch (_) { /* navegación privada */ }
 })();
 
+reflejarBloqueo();
+
 $("#form-login").addEventListener("submit", async (evento) => {
   evento.preventDefault();
+  if (segundosDeEspera() > 0) return;
+
   const boton = evento.target.querySelector("button[type=submit]");
   const datos = new FormData(evento.target);
   const correo = String(datos.get("email")).trim().toLowerCase();
@@ -187,6 +262,11 @@ $("#form-login").addEventListener("submit", async (evento) => {
     else localStorage.removeItem(CLAVE_CORREO_RECORDADO);
   } catch (_) { /* navegación privada */ }
 
+  // La espera va antes de consultar, no después: así no se puede medir el
+  // tiempo de respuesta para deducir si el correo existe.
+  const espera = esperaTrasFallo(leerIntentos().fallos);
+  if (espera > 0) await new Promise((seguir) => setTimeout(seguir, espera));
+
   const { error } = await supabase.auth.signInWithPassword({
     email: correo,
     password: String(datos.get("password")),
@@ -196,13 +276,18 @@ $("#form-login").addEventListener("submit", async (evento) => {
   boton.textContent = "ENTRAR";
 
   if (error) {
+    registrarFallo();
     // Supabase responde lo mismo ante correo inexistente y clave incorrecta,
     // lo cual es deseable: no revela qué correos están registrados.
-    $("#error-login").textContent = /email not confirmed/i.test(error.message)
-      ? "Tenés que confirmar tu correo antes de entrar. Revisá tu bandeja."
-      : "Correo o contraseña incorrectos.";
+    if (segundosDeEspera() === 0) {
+      $("#error-login").textContent = /email not confirmed/i.test(error.message)
+        ? "Tenés que confirmar tu correo antes de entrar. Revisá tu bandeja."
+        : "Correo o contraseña incorrectos.";
+    }
     return;
   }
+
+  limpiarIntentos();
   await arrancar();
 });
 

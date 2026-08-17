@@ -1,0 +1,32 @@
+# Cabeceras de seguridad. Cloudflare las aplica a todo lo que sirve.
+#
+# El sitio carga exactamente dos orígenes externos: cdn.jsdelivr.net (la
+# librería de Supabase) y el proyecto de Supabase (la API). Todo lo demás es
+# propio, así que la política puede ser estricta.
+
+/*
+  # Obliga a HTTPS durante un año, incluso si alguien teclea http://
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+  # Impide que el navegador adivine el tipo de un archivo. Sin esto, un archivo
+  # subido con extensión inocente podría acabar ejecutándose como script.
+  X-Content-Type-Options: nosniff
+
+  # No deja que el sitio se cargue dentro de un iframe ajeno. Es lo que evita
+  # el secuestro de clics: una web falsa que superpone botones invisibles sobre
+  # el panel para que la administradora pulse sin darse cuenta.
+  X-Frame-Options: DENY
+
+  # Al salir hacia otro sitio solo se comparte el dominio, nunca la ruta.
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # El sitio no necesita cámara, micrófono ni ubicación: se desactivan.
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+
+  # De dónde puede cargar cada tipo de recurso. Lo que no esté acá, el
+  # navegador lo bloquea aunque alguien logre inyectar una etiqueta.
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://jwfxqkoetxkoubuczvyj.supabase.co https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+
+# El panel no debe aparecer nunca en un buscador.
+/admin/*
+  X-Robots-Tag: noindex, nofollow, noarchive
