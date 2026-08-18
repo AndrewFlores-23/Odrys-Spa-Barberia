@@ -38,6 +38,10 @@ const DATOS = {
   politicaCancelacion: null, // cuántas horas antes se puede cancelar sin costo
 };
 
+// Debe coincidir con VERSION_PRIVACIDAD en reservas.js: es lo que se guarda
+// junto a cada cita como constancia de qué texto se aceptó. Si se cambia el
+// contenido de esta política, hay que subir las dos.
+const VERSION = "2026-08-18";
 const ACTUALIZADO = "18 de agosto de 2026";
 
 // Un dato que falta se ve, no se disimula: si se publicara con el hueco, al
@@ -105,6 +109,10 @@ const PRIVACIDAD = {
       <p>Tratamos sus datos con base en el <strong>consentimiento informado y
       expreso</strong> que usted otorga al marcar la casilla de aceptación antes
       de enviar su solicitud de reserva, conforme al artículo 5 de la Ley 8968.</p>
+      <p>Junto con la cita guardamos <strong>la fecha y hora en que usted aceptó
+      y la versión de este texto que estaba vigente</strong>. Es el respaldo de
+      que el consentimiento existió y de a qué redacción corresponde. No
+      registramos su dirección IP.</p>
       <p>Puede retirar ese consentimiento en cualquier momento escribiéndonos.
       Retirarlo no afecta la validez del tratamiento anterior, pero puede
       impedirnos mantener una cita ya agendada.</p>`],
@@ -374,7 +382,7 @@ function pagina(def, otras) {
   <main class="legal-wrap">
     <p class="eyebrow">${escapar(DATOS.marca).toUpperCase()}</p>
     <h1>${def.h1}</h1>
-    <p class="legal-fecha">Última actualización: ${ACTUALIZADO}</p>
+    <p class="legal-fecha">Última actualización: ${ACTUALIZADO} · Versión ${VERSION}</p>
     <p class="legal-intro">${def.intro}</p>
 
     <nav class="legal-nav">${navLegal}</nav>

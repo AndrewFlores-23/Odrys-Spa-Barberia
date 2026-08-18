@@ -37,6 +37,11 @@
   })();
   let tipoCambio = 520;
 
+  // Versión del texto de privacidad que la persona acepta al reservar. Se
+  // guarda junto con la cita. Hay que subirla cada vez que cambie el contenido
+  // de privacidad.html, o el registro diría que aceptó algo que ya no existe.
+  const VERSION_PRIVACIDAD = "2026-08-18";
+
   const money = (amount, currency = "USD") => {
     if (moneda === "CRC" && currency === "USD") {
       return `₡${new Intl.NumberFormat("es-CR", { maximumFractionDigits: 0 }).format(Math.round(amount * tipoCambio))}`;
@@ -645,7 +650,12 @@
         p_services: items.map((item) => ({ service_id: item.remoteId, quantity: item.quantity })),
         p_notes: String(data.get("comentarios") || ""),
         p_language: lang,
-        p_party_size: Number(data.get("personas") || 1)
+        p_party_size: Number(data.get("personas") || 1),
+        // La casilla del formulario ya es obligatoria, pero se manda igual:
+        // book_appointment la exige del lado de la base y guarda la fecha de
+        // aceptación, que es la prueba del consentimiento que pide la Ley 8968.
+        p_consentimiento: data.get("consentimiento") === "on",
+        p_consentimiento_version: VERSION_PRIVACIDAD
       });
 
       if (error) {
