@@ -145,26 +145,26 @@
 
   const copy = {
     es: {
-      add: "AGREGAR +", added: "AGREGADO ✓", empty: "Agregá servicios desde el catálogo para comenzar.",
+      add: "AGREGAR +", added: "AGREGADO ✓", empty: "Agregue servicios desde el catálogo para comenzar.",
       service: "servicio", services: "servicios", perService: "por servicio", quantity: "Cantidad de", minus: "Quitar uno", plus: "Agregar uno",
       confirmPrice: "Precio por confirmar", confirmDuration: "Duración por confirmar", plusConfirm: "+ por confirmar", toConfirm: "Por confirmar",
-      view: "VER RESERVA", viewRequest: "Ver reserva", error: "Agregá al menos un servicio antes de reservar.",
+      view: "VER RESERVA", viewRequest: "Ver reserva", error: "Agregue al menos un servicio antes de reservar.",
       request: "RESERVA CONFIRMADA", client: "Cliente", people: "Personas", selected: "Servicios",
       total: "Total estimado", duration: "Duración", withPro: "Profesional", dateTime: "Fecha y hora",
       comments: "Detalles", booked: "Cita confirmada. Te esperamos.",
       // Estados de los desplegables
-      pickServices: "Primero agregá servicios", pickPro: "Elegí un profesional",
-      pickDate: "Elegí profesional y fecha", loading: "Buscando horas libres…",
+      pickServices: "Primero agregue servicios", pickPro: "Elija un profesional",
+      pickDate: "Elija profesional y fecha", loading: "Buscando horas libres…",
       noPro: "Ningún profesional cubre esa combinación", noSlots: "Sin horas libres ese día",
-      chooseP: "Seleccioná", chooseH: "Seleccioná una hora",
+      chooseP: "Seleccione", chooseH: "Seleccione una hora",
       // Mensajes
       sending: "RESERVANDO…", submit: "CONFIRMAR RESERVA",
       offline: "No pudimos conectar con el sistema de reservas. Escribinos por WhatsApp.",
-      needPro: "Elegí un profesional.", needHora: "Elegí una hora disponible.",
-      okTitle: "¡Listo! Tu cita quedó reservada.",
-      okBody: "Te enviamos la confirmación por correo. Abrimos WhatsApp para que tengas el detalle a mano.",
+      needPro: "Elija un profesional.", needHora: "Elija una hora disponible.",
+      okTitle: "¡Listo! Su cita quedó reservada.",
+      okBody: "Le enviamos la confirmación por correo. Abrimos WhatsApp para que tenga el detalle a mano.",
       okAgain: "HACER OTRA RESERVA",
-      splitPro: "Ese profesional no cubre todos los servicios elegidos. Reservá por separado o elegí otro."
+      splitPro: "Ese profesional no cubre todos los servicios elegidos. Reserve por separado o elija otro."
     },
     en: {
       add: "ADD +", added: "ADDED ✓", empty: "Add services from the menu to get started.",

@@ -31,14 +31,14 @@ function jsonResponse(body: unknown, status = 200) {
 
 const copy = {
   es: {
-    subject: (business: string) => `Tu cita en ${business} está confirmada`,
+    subject: (business: string) => `Su cita en ${business} está confirmada`,
     greeting: (name: string) => `Hola ${name},`,
-    intro: "Tu cita quedó confirmada. Estos son los detalles:",
+    intro: "Su cita quedó confirmada. Estos son los detalles:",
     withLabel: "Con",
     whenLabel: "Fecha y hora",
     servicesLabel: "Servicios",
     totalLabel: "Total estimado",
-    footer: "Si necesitás cambiar o cancelar tu cita, respondé este correo o escribinos por WhatsApp.",
+    footer: "Si necesita cambiar o cancelar su cita, responda este correo o escríbanos por WhatsApp.",
   },
   en: {
     subject: (business: string) => `Your appointment at ${business} is confirmed`,

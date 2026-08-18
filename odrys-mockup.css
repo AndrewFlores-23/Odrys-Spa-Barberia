@@ -368,3 +368,45 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
   .customer-fields input,
   .customer-fields select{min-height:52px}
 }
+
+/* --- Hero de spa: video de fondo con el texto encima ----------------------
+   Mismo planteo que el hero de barbería, pero el spa tiene tema claro: sobre
+   el video el texto oscuro no se leería, así que dentro del hero pasa a
+   blanco con un velo degradado detrás. Fuera del hero el tema claro sigue
+   igual, no se toca nada más de la página.
+
+   Se escribe completo (escritorio y celular) en vez de sumarse a las reglas
+   de barbería, para no arriesgar ese hero que ya está funcionando. */
+.spa-page .real-experience-hero{
+  position:relative;display:block;overflow:hidden;background:#20281f;
+  min-height:calc(100svh - 70px);
+}
+.spa-page .real-experience-hero .experience-copy{
+  position:relative;z-index:3;background:transparent;color:#fff;
+  min-height:calc(100svh - 70px);justify-content:flex-end;
+}
+.spa-page .real-experience-hero .experience-copy h1{color:#fff;text-shadow:0 3px 22px rgba(0,0,0,.5)}
+.spa-page .real-experience-hero .experience-copy>p:not(.eyebrow){
+  color:#fff;opacity:.86;text-shadow:0 2px 14px rgba(0,0,0,.45);
+}
+/* El vino del acento no contrasta sobre el video; se sube a un lavanda claro. */
+.spa-page .real-experience-hero .experience-copy .eyebrow{color:#dcc6d6}
+
+.spa-page .spa-video-hero{position:absolute;z-index:0;inset:0;height:100%;min-height:100%;padding:0;background:#20281f}
+/* min-height:0 es necesario: la regla general de .real-hero-image>video impone
+   680px y, junto con inset:0, estiraría el video más allá del hero. */
+.spa-page .spa-video-hero>video{
+  width:100%;height:100%;min-height:0;object-fit:cover;object-position:center;
+}
+.spa-page .spa-video-hero .hero-video-shade{
+  z-index:1;
+  background:linear-gradient(180deg,rgba(12,16,12,.42) 0%,rgba(12,16,12,.26) 30%,rgba(46,26,42,.78) 76%,rgba(46,26,42,.92) 100%);
+}
+.spa-page .spa-video-hero .page-stamp{display:none}
+
+@media(min-width:801px){
+  .spa-page .real-experience-hero .experience-copy{max-width:760px;padding:120px 5vw 90px}
+}
+@media(max-width:800px){
+  .spa-page .real-experience-hero .experience-copy{padding:105px 24px 66px}
+}

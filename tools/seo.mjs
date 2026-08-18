@@ -48,7 +48,7 @@ const paginas = [
     titulo: "Spa y Barbería en Tamarindo, Guanacaste | Odry's Beauty Spa & Barber",
     descripcion:
       "Spa y barbería en Tamarindo, Guanacaste. Masajes, manicure, pedicure, depilación, "
-      + "cortes de cabello y barba. Atención en el local o a domicilio en tu villa. "
+      + "cortes de cabello y barba. Atención en el local o a domicilio en su villa. "
       + "Abierto todos los días de 9 a. m. a 7 p. m.",
     imagen: `${SITIO}/assets/images/og-inicio.jpg`,
     imagenAlt: "Odry's Beauty Spa & Barber en Tamarindo: spa y barbería en un mismo lugar",
@@ -62,7 +62,7 @@ const paginas = [
     titulo: "Spa y Barbería en Tamarindo, Guanacaste | Odry's Beauty Spa & Barber",
     descripcion:
       "Spa y barbería en Tamarindo, Guanacaste. Masajes, manicure, pedicure, depilación, "
-      + "cortes de cabello y barba. Atención en el local o a domicilio en tu villa.",
+      + "cortes de cabello y barba. Atención en el local o a domicilio en su villa.",
     imagen: `${SITIO}/assets/images/og-inicio.jpg`,
     imagenAlt: "Odry's Beauty Spa & Barber en Tamarindo: spa y barbería en un mismo lugar",
     tipo: null,
@@ -74,7 +74,7 @@ const paginas = [
     titulo: "Barbería en Tamarindo | Cortes, Fade, Barba y Estilismo | Odry's",
     descripcion:
       "Barbería en Tamarindo, Guanacaste: cortes clásicos, fade, perfilado de barba, "
-      + "coloración y trenzas. Reservá tu cita en línea y elegí con qué profesional atenderte.",
+      + "coloración y trenzas. Reserve su cita en línea y elija con qué profesional atenderse.",
     imagen: `${SITIO}/assets/images/og-barberia.jpg`,
     imagenAlt: "Barbería y estilismo de Odry's en Tamarindo, Guanacaste",
     tipo: "HairSalon",
