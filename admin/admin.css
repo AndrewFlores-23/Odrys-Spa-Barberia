@@ -241,21 +241,11 @@ dialog label span{display:block;font-size:.65rem;letter-spacing:.12em;color:var(
 .barra-tipo-cambio input{width:150px;padding:8px 10px;font-size:.9rem}
 .barra-tipo-cambio small{color:var(--gris);font-size:.76rem;flex:1 1 180px}
 
-/* La casilla y su texto van en una misma línea. Hacía falta el display:flex:
-   sin él, el justify-content no hacía nada y ganaban las reglas generales de
-   .tarjeta-acceso (label y span en bloque), que dejaban la casilla arriba y
-   el texto debajo. El width:auto es por la misma razón: la regla general de
-   input pone width:100% y deformaba el cuadrito. */
 .tarjeta-acceso .casilla-linea.recordar{
-  display:flex;align-items:center;justify-content:flex-start;gap:10px;
-  margin:2px 0 16px;cursor:pointer;min-height:44px;text-align:left;
-}
-.tarjeta-acceso .casilla-linea.recordar input[type=checkbox]{
-  width:20px;height:20px;flex:none;margin:0;padding:0;accent-color:var(--vino);
+  justify-content:flex-start;margin:2px 0 16px;cursor:pointer;
 }
 .tarjeta-acceso .casilla-linea.recordar span{
-  display:inline;font-size:.8rem;color:var(--gris);letter-spacing:normal;
-  text-transform:none;font-weight:400;margin:0;
+  font-size:.8rem;color:var(--gris);letter-spacing:normal;text-transform:none;font-weight:400;margin:0;
 }
 
 .bloque-ingles{border:1px solid var(--linea);border-radius:4px;padding:10px 12px;margin-bottom:14px}
@@ -531,6 +521,27 @@ dialog textarea{resize:vertical;font-size:.9rem}
   .casillas { max-height: 46vh; }
   .casillas label { min-height: 42px; font-size: .92rem; }
   .casillas input[type=checkbox] { width: 21px; height: 21px; }
+
+  /* La casilla "Recordar mi correo" quedaba encima de su texto en vez de al
+     lado: .casilla-linea nunca declara display:flex, así que su
+     justify-content no hace nada y ganan las reglas generales de
+     .tarjeta-acceso (label y span en bloque). En un teléfono eso se come una
+     línea entera y deja una zona de toque diminuta, así que acá se endereza.
+     En escritorio se deja tal cual estaba, por pedido. */
+  .tarjeta-acceso .casilla-linea.recordar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    text-align: left;
+  }
+  /* width:auto porque la regla general de input pone width:100% y deforma
+     el cuadrito. */
+  .tarjeta-acceso .casilla-linea.recordar input[type=checkbox] {
+    width: 20px; height: 20px; flex: none; margin: 0; padding: 0;
+    min-height: 0; accent-color: var(--vino);
+  }
+  .tarjeta-acceso .casilla-linea.recordar span { display: inline; margin: 0; }
 
   /* --- Acceso y Mi cuenta ---------------------------------------------- */
   .tarjeta-acceso { padding: 28px 20px; }
