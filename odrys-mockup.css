@@ -300,3 +300,41 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
   .creditos-redes a{transition:background .16s,border-color .16s,color .16s,box-shadow .16s}
   .creditos-redes a:hover{transform:none}
 }
+
+/* --- Hero de barbería: el video de fondo, también en escritorio -----------
+   Estas reglas vivían dentro de @media(max-width:800px), así que solo se
+   aplicaban en móvil. En escritorio el hero seguía siendo una rejilla de dos
+   columnas: el video ocupaba solo la derecha y la mitad izquierda quedaba en
+   negro sólido. Fuera de la consulta de medios, el video pasa a cubrir todo
+   el hero con el texto encima, que es como estaba pensado. */
+.barber-page .real-experience-hero{
+  position:relative;display:block;overflow:hidden;background:#090809;
+  min-height:calc(100svh - 70px);
+}
+.barber-page .real-experience-hero .experience-copy{
+  position:relative;z-index:3;background:transparent;color:#fff;
+  min-height:calc(100svh - 70px);justify-content:flex-end;
+}
+.barber-page .real-experience-hero .experience-copy h1{color:#fff;text-shadow:0 3px 22px rgba(0,0,0,.5)}
+.barber-page .real-experience-hero .experience-copy>p:not(.eyebrow){
+  color:#fff;opacity:.84;text-shadow:0 2px 14px rgba(0,0,0,.45);
+}
+.barber-page .real-experience-hero .experience-copy .eyebrow{color:#e5c77f}
+
+.barber-page .barber-video-hero{position:absolute;z-index:0;inset:0;height:100%;min-height:100%;padding:0}
+/* min-height:0 es necesario: la regla general impone 680px y, combinada con
+   inset:0, estiraba el video más allá del hero. */
+.barber-page .barber-video-hero>video{
+  width:100%;height:100%;min-height:0;object-fit:cover;object-position:center;
+}
+.barber-page .barber-video-hero .hero-video-shade{
+  z-index:1;
+  background:linear-gradient(180deg,rgba(8,5,7,.48) 0%,rgba(8,5,7,.32) 32%,rgba(17,7,13,.82) 78%,rgba(17,7,13,.94) 100%);
+}
+.barber-page .barber-video-hero .page-stamp{display:none}
+
+/* En pantallas anchas el texto ocupaba todo el ancho y quedaba suelto.
+   Se limita para que respire y el video se vea a los lados. */
+@media(min-width:801px){
+  .barber-page .real-experience-hero .experience-copy{max-width:760px;padding:120px 5vw 90px}
+}
