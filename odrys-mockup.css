@@ -338,3 +338,33 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
 @media(min-width:801px){
   .barber-page .real-experience-hero .experience-copy{max-width:760px;padding:120px 5vw 90px}
 }
+
+/* --- Sin zoom accidental en celular ---------------------------------------
+   El problema no era que se pudiera hacer zoom, era que el teléfono lo hacía
+   solo. Dos causas, las dos arregladas acá:
+
+   1. iOS amplía la página sola al tocar un campo cuya letra mide menos de
+      16px. La regla `button,input{font:inherit}` de más arriba no cubre
+      `select` ni `textarea`, así que esos tres controles de la reserva
+      —PROFESIONAL, HORA y COMENTARIOS— se quedaron en los 13.33px que trae
+      el navegador por defecto. Justo los más usados del formulario: se
+      tocaban, la página se ampliaba y había que reacomodarla a mano.
+
+   2. El doble toque también amplía. `touch-action:manipulation` lo desactiva
+      sin estorbar el desplazamiento normal.
+
+   Solo se toca el tamaño de los controles del formulario. Las etiquetas
+   pequeñas con espaciado de letras que definen el diseño quedan igual, y
+   nada de esto pasa de los 800px, así que en escritorio no cambia nada. */
+@media(max-width:800px){
+  html{touch-action:manipulation}
+  /* El font:inherit de más arriba no llega a select ni textarea, así que se
+     les da acá la tipografía del sitio junto con los 16px. Se deja dentro de
+     la consulta de celular a propósito: en escritorio no se toca nada. */
+  .customer-fields input,
+  .customer-fields select,
+  .customer-fields textarea{font:inherit;font-size:16px}
+  /* Alto cómodo para el dedo, del mismo tamaño en los tres. */
+  .customer-fields input,
+  .customer-fields select{min-height:52px}
+}
