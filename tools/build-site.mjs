@@ -19,6 +19,10 @@ const ARCHIVOS = [
   "odrys-mockup.html",
   "barberia.html",
   "spa.html",
+  // Páginas legales, generadas por tools/legales.mjs.
+  "privacidad.html",
+  "terminos.html",
+  "cookies.html",
   "odrys-mockup.css",
   "idioma.js",
   "novedades.js",

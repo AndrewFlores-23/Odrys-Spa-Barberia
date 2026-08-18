@@ -410,3 +410,131 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
 @media(max-width:800px){
   .spa-page .real-experience-hero .experience-copy{padding:105px 24px 66px}
 }
+
+/* --- Páginas legales -------------------------------------------------------
+   Privacidad, términos y cookies. Son documentos para leer, no para vender:
+   una sola columna angosta, buen interlineado y nada que compita con el texto.
+   Reutilizan el tema claro del spa para no inventar una paleta nueva. */
+.pagina-legal{background:var(--paper,#f4f1ec);color:#2b2723}
+.pagina-legal .site-header{color:var(--ink,#20201d)}
+.legal-wrap{
+  max-width:74ch;margin:0 auto;padding:clamp(38px,7vw,86px) clamp(20px,5vw,32px) 90px;
+  font-family:Georgia,'Times New Roman',serif;font-size:16px;line-height:1.75;
+}
+.legal-wrap .eyebrow{
+  font-family:'Inter',system-ui,sans-serif;font-size:9px;font-weight:800;
+  letter-spacing:.2em;color:var(--wine,#6b294d);margin:0 0 14px;
+}
+.legal-wrap h1{
+  font-size:clamp(34px,5.4vw,52px);line-height:1.08;margin:0 0 10px;
+  letter-spacing:-.02em;color:var(--wine,#6b294d);
+}
+.legal-fecha{
+  font-family:'Inter',system-ui,sans-serif;font-size:12px;letter-spacing:.06em;
+  color:#7a736d;margin:0 0 26px;
+}
+.legal-intro{
+  font-size:18px;line-height:1.7;color:#453f3a;margin:0 0 34px;
+  padding-left:16px;border-left:3px solid var(--gold,#c7a15a);
+}
+/* Enlaces a los otros dos documentos: se leen como pestañas, no como botones. */
+.legal-nav{
+  display:flex;flex-wrap:wrap;gap:10px;margin:0 0 44px;padding-bottom:26px;
+  border-bottom:1px solid rgba(43,39,35,.14);
+}
+.legal-nav a{
+  font-family:'Inter',system-ui,sans-serif;font-size:10px;font-weight:800;
+  letter-spacing:.12em;text-transform:uppercase;text-decoration:none;
+  color:var(--wine,#6b294d);border:1px solid rgba(107,41,77,.28);
+  border-radius:999px;padding:10px 15px;transition:background-color .2s,color .2s;
+}
+.legal-nav a:hover{background:var(--wine,#6b294d);color:#fff}
+
+.legal-seccion{margin:0 0 38px}
+.legal-seccion h2{
+  font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--wine,#6b294d);
+  margin:0 0 14px;
+}
+.legal-seccion p{margin:0 0 15px}
+.legal-seccion ul{margin:0 0 15px;padding-left:22px}
+.legal-seccion li{margin-bottom:9px}
+.legal-seccion strong{font-weight:700;color:#1f1b18}
+.legal-seccion a{color:var(--wine,#6b294d);text-underline-offset:3px}
+.legal-seccion code{
+  font-family:ui-monospace,'Cascadia Code',Menlo,monospace;font-size:13px;
+  background:rgba(43,39,35,.07);border-radius:3px;padding:2px 6px;
+}
+.legal-cierre{
+  margin-top:52px;padding-top:26px;border-top:1px solid rgba(43,39,35,.14);
+  font-size:15px;color:#5c554f;
+}
+
+.tabla-legal{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:14px}
+.tabla-legal th{
+  font-family:'Inter',system-ui,sans-serif;font-size:9px;font-weight:800;
+  letter-spacing:.11em;text-transform:uppercase;color:#7a736d;text-align:left;
+  padding:0 12px 8px 0;border-bottom:1px solid rgba(43,39,35,.18);
+}
+.tabla-legal td{padding:11px 12px 11px 0;border-bottom:1px solid rgba(43,39,35,.09);vertical-align:top}
+
+/* Un dato que la dueña todavía no entregó. Se marca fuerte a propósito: si la
+   página se publicara así, tiene que saltar a la vista y no pasar por texto
+   legal terminado. */
+.dato-pendiente{
+  background:#fde68a;color:#713f12;font-family:'Inter',system-ui,sans-serif;
+  font-size:12px;font-weight:800;letter-spacing:.04em;padding:2px 7px;border-radius:3px;
+}
+
+@media(max-width:800px){
+  .legal-wrap{font-size:15px;line-height:1.7}
+  .legal-intro{font-size:16px}
+  /* La tabla de cookies no cabe: se desplaza sola en vez de romper la página. */
+  .tabla-legal{display:block;overflow-x:auto;white-space:nowrap}
+}
+
+/* --- Consentimiento de datos en el formulario de reserva ------------------
+   La casilla nunca viene marcada: la Ley 8968 pide consentimiento expreso, y
+   una casilla premarcada no cuenta como tal. El atributo required basta para
+   bloquear el envío, porque reservas.js llama a form.reportValidity(). */
+/* Se antepone .customer-fields porque las reglas generales del formulario
+   (.customer-fields label y .customer-fields label>span) tienen más
+   especificidad: sin esto la casilla queda encima del texto y la frase sale
+   con el tamaño y el espaciado de una etiqueta de campo. */
+.customer-fields .consentimiento{
+  grid-column:1/-1;display:flex;flex-direction:row;align-items:flex-start;gap:12px;
+  margin:6px 0 0;cursor:pointer;font-family:Georgia,serif;font-size:14px;
+  line-height:1.55;color:#4a3f47;text-transform:none;
+}
+.customer-fields .consentimiento>span{
+  display:inline;font-size:14px;font-weight:400;letter-spacing:normal;
+  min-height:0;text-transform:none;
+}
+.barber-page .customer-fields .consentimiento{color:rgba(255,255,255,.8)}
+.customer-fields .consentimiento input[type=checkbox]{
+  width:20px;height:20px;flex:none;margin:1px 0 0;padding:0;min-height:0;
+  accent-color:var(--accent,#684758);cursor:pointer;
+}
+.consentimiento-enlaces{
+  grid-column:1/-1;display:flex;flex-wrap:wrap;gap:18px;margin:10px 0 0;
+  font-family:'Inter',system-ui,sans-serif;font-size:9px;font-weight:800;
+  letter-spacing:.12em;
+}
+.consentimiento-enlaces a{color:var(--accent,#684758);text-decoration:none;border-bottom:1px solid}
+.barber-page .consentimiento-enlaces a{color:#c9a86a}
+.consentimiento-enlaces a:hover{opacity:.72}
+
+/* En el pie, los tres enlaces legales pesan menos que los de navegación. */
+.footer-links a[href="privacidad.html"],
+.footer-links a[href="terminos.html"],
+.footer-links a[href="cookies.html"]{opacity:.62;font-size:.92em}
+.footer-links a[href="privacidad.html"]:hover,
+.footer-links a[href="terminos.html"]:hover,
+.footer-links a[href="cookies.html"]:hover{opacity:1}
+
+@media(max-width:800px){
+  /* 16px otra vez: si la casilla queda chica es difícil de tocar. */
+  .customer-fields .consentimiento,
+  .customer-fields .consentimiento>span{font-size:15px}
+  .customer-fields .consentimiento input[type=checkbox]{width:22px;height:22px}
+}
