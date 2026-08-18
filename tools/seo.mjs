@@ -78,9 +78,11 @@ const paginas = [
     imagen: `${SITIO}/assets/images/og-barberia.jpg`,
     imagenAlt: "Barbería y estilismo de Odry's en Tamarindo, Guanacaste",
     tipo: "HairSalon",
+    // Debe reflejar el catálogo real de la base: Google contrasta estos datos
+    // con la ficha del negocio y con lo que se ve en la página.
     servicios: [
-      "Corte de cabello para hombre", "Fade y diseño", "Perfilado de barba",
-      "Combo de corte y barba", "Corte femenino", "Coloración", "Trenzas",
+      "Corte regular", "Corte y barba", "Fade haircut", "Barba y contorno",
+      "Líneas", "Cejas", "Corte femenino", "Coloración", "Trenzas",
     ],
   },
   {
