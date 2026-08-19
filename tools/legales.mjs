@@ -31,11 +31,40 @@ const DATOS = {
   provincia: "Tamarindo, Santa Cruz, Guanacaste, Costa Rica",
 
   // Pendientes: los tiene que dar la dueña del negocio.
-  razonSocial: null,        // nombre legal completo, como aparece en el registro
-  cedulaJuridica: null,     // o cédula física si opera como persona física
   direccionExacta: null,    // señas exactas del local en Tamarindo
   correoDatos: null,        // correo de contacto para asuntos de datos personales
   politicaCancelacion: null, // cuántas horas antes se puede cancelar sin costo
+};
+
+// ------------------------------------------------------ Quién es responsable
+// La Ley 8968 define al responsable como "persona física o jurídica": no hace
+// falta que exista una sociedad. En Costa Rica lo corriente en un negocio de
+// este tamaño es operar como persona física con un nombre comercial, y eso
+// cumple igual. Lo que la ley necesita es que se sepa quién responde y cómo
+// contactarlo.
+const RESPONSABLE = {
+  // "fisica"  → la dueña opera a su nombre (no hay cédula jurídica)
+  // "juridica" → el negocio está inscrito como sociedad
+  tipo: "fisica",
+
+  // Con tipo "fisica": nombre completo de la dueña, como aparece en su cédula.
+  // Con tipo "juridica": razón social exacta del registro.
+  nombre: null,
+
+  // Cédula de identidad o cédula jurídica, según el caso.
+  identificacion: null,
+
+  // Publicar o no el número en la página.
+  //
+  // Para una sociedad conviene: la cédula jurídica es información pública del
+  // Registro Nacional y da seriedad.
+  //
+  // Para una persona física es discutible. El número de cédula es un dato
+  // personal de la dueña y publicarlo en una web abierta facilita suplantación.
+  // La ley pide que el responsable sea identificable y contactable, y eso se
+  // cumple con nombre, domicilio y correo. Por eso viene apagado por defecto
+  // cuando es persona física: que lo decida el abogado, no el generador.
+  publicarIdentificacion: false,
 };
 
 // Debe coincidir con VERSION_PRIVACIDAD en reservas.js: es lo que se guarda
@@ -50,12 +79,20 @@ const dato = (valor, queFalta) =>
   valor ?? `<mark class="dato-pendiente">POR COMPLETAR: ${queFalta}</mark>`;
 
 // --------------------------------------------------------- Contenido común
+const esFisica = RESPONSABLE.tipo === "fisica";
+
+// La frase se arma según el tipo: una persona física no tiene razón social ni
+// cédula jurídica, y forzar esas palabras haría que el texto describiera algo
+// que no existe.
+const identificacion = RESPONSABLE.publicarIdentificacion
+  ? `, ${esFisica ? "cédula de identidad" : "cédula jurídica"} ${dato(RESPONSABLE.identificacion, esFisica ? "número de cédula de identidad" : "número de cédula jurídica")}`
+  : "";
+
 const responsable = `
   <p>El responsable del tratamiento de sus datos personales es
-  ${dato(DATOS.razonSocial, "razón social del negocio")}, cédula jurídica
-  ${dato(DATOS.cedulaJuridica, "número de cédula jurídica")}, que opera
-  comercialmente como <strong>${DATOS.marca}</strong>, con domicilio en
-  ${dato(DATOS.direccionExacta, "dirección exacta del local")},
+  ${dato(RESPONSABLE.nombre, esFisica ? "nombre completo de la propietaria" : "razón social del negocio")}${identificacion},
+  quien opera comercialmente como <strong>${DATOS.marca}</strong>, con
+  domicilio en ${dato(DATOS.direccionExacta, "dirección exacta del local")},
   ${DATOS.provincia}.</p>
   <p>Para cualquier consulta sobre sus datos puede escribir a
   <a href="mailto:${DATOS.correoDatos ?? DATOS.correoReservas}">${dato(DATOS.correoDatos, "correo de contacto para datos personales")}</a>
@@ -412,9 +449,13 @@ for (const def of TODAS) {
   console.log(`  ${def.archivo}`);
 }
 
-const pendientes = Object.entries(DATOS).filter(([, v]) => v === null).map(([k]) => k);
+const pendientes = [
+  ...Object.entries(DATOS).filter(([, v]) => v === null).map(([k]) => k),
+  ...(RESPONSABLE.nombre === null ? [esFisica ? "RESPONSABLE.nombre (nombre de la propietaria)" : "RESPONSABLE.nombre (razón social)"] : []),
+  ...(RESPONSABLE.publicarIdentificacion && RESPONSABLE.identificacion === null ? ["RESPONSABLE.identificacion"] : []),
+];
 if (pendientes.length) {
   console.log(`\n  FALTAN ${pendientes.length} DATOS DEL NEGOCIO, visibles en las páginas:`);
   for (const p of pendientes) console.log(`    · ${p}`);
-  console.log("\n  Complételos en DATOS, dentro de este archivo, y vuelva a ejecutarlo.");
+  console.log("\n  Complételos en DATOS o RESPONSABLE, dentro de este archivo, y vuelva a ejecutarlo.");
 }
