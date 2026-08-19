@@ -755,6 +755,8 @@ function pintarServicios() {
       <div class="fila-acciones">
         <label class="filtro"><span>PRECIO (USD)</span>
           <input type="number" min="0" step="1" data-campo="price" value="${s.price ?? ""}" placeholder="—"></label>
+        <label class="casilla-desde"><input type="checkbox" data-campo="precio_desde"${s.precio_desde ? " checked" : ""}>
+          <span>Precio "desde"</span></label>
         <label class="filtro"><span>DURACIÓN (MIN)</span>
           <input type="number" min="5" step="5" data-campo="duration_minutes" value="${s.duration_minutes}"></label>
         <button type="button" data-accion="guardar">GUARDAR</button>
@@ -770,7 +772,7 @@ function pintarServicios() {
 // por su cuenta y el panel debe reflejar ese resultado, no adivinarlo.
 async function recargarCatalogo() {
   const [{ data: servicios }, { data: rolServicios }] = await Promise.all([
-    supabase.from("services").select("id, category, name_es, name_en, description_es, description_en, price, currency, duration_minutes, active").order("category").order("name_es"),
+    supabase.from("services").select("id, category, name_es, name_en, description_es, description_en, price, precio_desde, currency, duration_minutes, active").order("category").order("name_es"),
     supabase.from("role_services").select("role, service_id"),
   ]);
   catalogoServicios = servicios ?? [];
@@ -950,6 +952,7 @@ $("#servicios-lista").addEventListener("click", async (evento) => {
   const cambios = {
     price: precioTexto === "" ? null : Number(precioTexto),
     duration_minutes: duracion,
+    precio_desde: fila.querySelector('[data-campo="precio_desde"]').checked,
   };
 
   const { error } = await supabase.from("services").update(cambios).eq("id", id);

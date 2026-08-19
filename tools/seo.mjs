@@ -81,8 +81,17 @@ const paginas = [
     // Debe reflejar el catálogo real de la base: Google contrasta estos datos
     // con la ficha del negocio y con lo que se ve en la página.
     servicios: [
+      // Barbería
       "Corte regular", "Corte y barba", "Fade haircut", "Barba y contorno",
-      "Líneas", "Cejas", "Corte femenino", "Coloración", "Trenzas",
+      "Líneas", "Cejas",
+      // Corte y peinado
+      "Corte de puntas", "Blower y lavado", "Peinado para evento",
+      // Color
+      "Retoque de raíz", "Color completo", "Highlights", "Balayage", "Babylights",
+      // Tratamiento
+      "Hidratación capilar", "Tratamiento de cuero cabelludo", "Botox capilar",
+      // Alisados
+      "Keratina", "Nanoplastia",
     ],
   },
   {

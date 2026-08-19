@@ -74,7 +74,7 @@
 
           const meta = precio === null
             ? `<strong data-es="PRECIO POR CONFIRMAR" data-en="PRICE TO CONFIRM">${esc(textoSegunIdioma("PRECIO POR CONFIRMAR", "PRICE TO CONFIRM"))}</strong>`
-            : `<span>${s.duration_minutes} MIN</span><strong>${money(precio, s.currency || "USD")}</strong>`;
+            : `<span>${s.duration_minutes} MIN</span><strong>${s.precio_desde ? textoSegunIdioma("desde", "from") + " " : ""}${money(precio, s.currency || "USD")}</strong>`;
 
           const descripcion = s.description_es
             ? `<p data-es="${esc(s.description_es)}" data-en="${esc(descEn)}">${esc(textoSegunIdioma(s.description_es, descEn))}</p>`
@@ -82,6 +82,7 @@
 
           return `<article class="catalog-card" data-service-es="${esc(s.name_es)}" data-service-en="${esc(nombreEn)}"`
             + (precio === null ? "" : ` data-price="${precio}" data-currency="${esc(s.currency || "USD")}"`)
+            + (s.precio_desde ? ` data-price-from="1"` : "")
             + ` data-duration="${s.duration_minutes}">`
             + `<span class="service-index">${String(indice).padStart(2, "0")}</span>`
             + `<div><h3 data-es="${esc(s.name_es)}" data-en="${esc(nombreEn)}">${esc(textoSegunIdioma(s.name_es, nombreEn))}</h3>${descripcion}</div>`
@@ -116,7 +117,7 @@
     // salgan ya correctas si la persona venía viendo colones.
     const [serviciosRes, ajustesRes] = await Promise.all([
       sb.from("services")
-        .select("id,category,name_es,name_en,description_es,description_en,price,currency,duration_minutes,grupo_es,grupo_en,orden_grupo,orden")
+        .select("id,category,name_es,name_en,description_es,description_en,price,precio_desde,currency,duration_minutes,grupo_es,grupo_en,orden_grupo,orden")
         .eq("active", true).eq("category", zonaDeLaPaginaTmp)
         .order("orden_grupo").order("orden"),
       sb.from("ajustes").select("tipo_cambio").eq("id", true).single(),
@@ -152,7 +153,7 @@
     es: {
       add: "AGREGAR +", added: "AGREGADO ✓", empty: "Agregue servicios desde el catálogo para comenzar.",
       service: "servicio", services: "servicios", perService: "por servicio", quantity: "Cantidad de", minus: "Quitar uno", plus: "Agregar uno",
-      confirmPrice: "Precio por confirmar", confirmDuration: "Duración por confirmar", plusConfirm: "+ por confirmar", toConfirm: "Por confirmar",
+      confirmPrice: "Precio por confirmar", confirmDuration: "Duración por confirmar", plusConfirm: "+ por confirmar", toConfirm: "Por confirmar", desde: "desde",
       view: "VER RESERVA", viewRequest: "Ver reserva", error: "Agregue al menos un servicio antes de reservar.",
       request: "RESERVA CONFIRMADA", client: "Cliente", people: "Personas", selected: "Servicios",
       total: "Total estimado", duration: "Duración", withPro: "Profesional", dateTime: "Fecha y hora",
@@ -174,7 +175,7 @@
     en: {
       add: "ADD +", added: "ADDED ✓", empty: "Add services from the menu to get started.",
       service: "service", services: "services", perService: "per service", quantity: "Quantity of", minus: "Remove one", plus: "Add one",
-      confirmPrice: "Price to confirm", confirmDuration: "Duration to confirm", plusConfirm: "+ to confirm", toConfirm: "To confirm",
+      confirmPrice: "Price to confirm", confirmDuration: "Duration to confirm", plusConfirm: "+ to confirm", toConfirm: "To confirm", desde: "from",
       view: "VIEW BOOKING", viewRequest: "View booking", error: "Add at least one service before booking.",
       request: "BOOKING CONFIRMED", client: "Guest", people: "Number of guests", selected: "Services",
       total: "Estimated total", duration: "Duration", withPro: "Professional", dateTime: "Date and time",
@@ -207,6 +208,8 @@
       },
       price: rawPrice !== undefined && rawPrice !== "" && Number.isFinite(Number(rawPrice)) ? Number(rawPrice) : null,
       currency: card.dataset.currency || "USD",
+      // "desde": el monto es un piso, no el precio final.
+      priceFrom: card.dataset.priceFrom === "1",
       duration: rawDuration !== undefined && rawDuration !== "" && Number.isFinite(Number(rawDuration)) ? Number(rawDuration) : null
     };
   });
@@ -263,7 +266,13 @@
   function pintarPreciosDelCatalogo() {
     services.forEach((servicio) => {
       const etiqueta = servicio.card.querySelector(".catalog-meta strong");
-      if (etiqueta && servicio.price !== null) etiqueta.textContent = money(servicio.price, servicio.currency);
+      // Se vuelve a anteponer "desde": esta función reescribe el texto completo
+      // al cambiar de moneda, y sin esto borraría la palabra que puso
+      // dibujarCatalogo, dejando anunciado un precio cerrado que no lo es.
+      if (etiqueta && servicio.price !== null) {
+        const desde = servicio.priceFrom ? textoSegunIdioma("desde", "from") + " " : "";
+        etiqueta.textContent = desde + money(servicio.price, servicio.currency);
+      }
     });
   }
 
@@ -319,6 +328,8 @@
       price, duration,
       currency: knownPriceItems[0]?.currency || "USD",
       unknownPrice: items.some((item) => item.price === null),
+      // Si un solo servicio es "desde", el total deja de ser exacto.
+      priceFrom: items.some((item) => item.priceFrom),
       unknownDuration: items.some((item) => item.duration === null)
     };
   };
@@ -327,6 +338,7 @@
     const labels = copy[language()];
     if (totals.unknownPrice && totals.price === 0) return labels.toConfirm;
     if (totals.unknownPrice) return `${money(totals.price, totals.currency)} ${labels.plusConfirm}`;
+    if (totals.priceFrom) return `${labels.desde} ${money(totals.price, totals.currency)}`;
     return money(totals.price, totals.currency);
   };
 
@@ -514,9 +526,10 @@
     } else {
       itemsContainer.innerHTML = items.map((item) => {
         const name = escapeHtml(item.name[lang]);
-        const unitPrice = item.price === null ? labels.confirmPrice : money(item.price, item.currency);
+        const desde = item.priceFrom ? labels.desde + " " : "";
+        const unitPrice = item.price === null ? labels.confirmPrice : desde + money(item.price, item.currency);
         const unitDuration = item.duration === null ? labels.confirmDuration : `${item.duration} min ${labels.perService}`;
-        const linePrice = item.price === null ? labels.toConfirm : money(item.price * item.quantity, item.currency);
+        const linePrice = item.price === null ? labels.toConfirm : desde + money(item.price * item.quantity, item.currency);
         return `<div class="cart-item"><div><strong>${name}</strong><small>${unitPrice} · ${unitDuration}</small></div><div class="quantity-control" aria-label="${labels.quantity} ${name}"><button type="button" data-action="minus" data-index="${item.index}" aria-label="${labels.minus}">−</button><span>${item.quantity}</span><button type="button" data-action="plus" data-index="${item.index}" aria-label="${labels.plus}">+</button></div><b>${linePrice}</b></div>`;
       }).join("");
     }

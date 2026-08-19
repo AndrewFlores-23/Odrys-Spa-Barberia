@@ -568,3 +568,22 @@ dialog textarea{resize:vertical;font-size:.9rem}
   .dia-horario .almuerzo + label { border-top: 0; padding-top: 0; }
   .encabezado-vista h2 { font-size: 1.3rem; }
 }
+
+/* Casilla de precio "desde", dentro de la fila de servicios. Las reglas
+   generales de .fila-acciones dan a los controles el aspecto de botón, así que
+   esta se declara aparte para que se lea como lo que es. */
+.fila-acciones .casilla-desde{
+  display:flex;align-items:center;gap:7px;padding:0 4px;
+  font-size:.7rem;color:var(--gris);cursor:pointer;white-space:nowrap;
+}
+.fila-acciones .casilla-desde input[type=checkbox]{
+  width:17px;height:17px;min-height:0;margin:0;padding:0;flex:none;
+  accent-color:var(--vino);cursor:pointer;
+}
+@media(max-width:760px){
+  .fila-acciones .casilla-desde{
+    grid-column:1/-1;min-height:44px;font-size:.85rem;
+    border-top:1px solid var(--linea);padding-top:10px;
+  }
+  .fila-acciones .casilla-desde input[type=checkbox]{width:21px;height:21px}
+}
