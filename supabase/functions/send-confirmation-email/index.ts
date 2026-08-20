@@ -16,6 +16,10 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 // El dominio tiene que estar verificado en Resend o el envío se rechaza.
 const FROM_EMAIL = Deno.env.get("CONFIRMATION_FROM_EMAIL")
   || "Odry's Beauty Spa & Barber <reservas@odrysbeautyspa.com>";
+// El dominio no tiene registros MX, así que reservas@ solo envía: una respuesta
+// del cliente se perdería. El texto del correo dirige a WhatsApp, pero igual se
+// apunta el responder a un buzón que alguien lee de verdad.
+const REPLY_TO = Deno.env.get("CONFIRMATION_REPLY_TO") || "beautyspaodrys@gmail.com";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -38,7 +42,7 @@ const copy = {
     whenLabel: "Fecha y hora",
     servicesLabel: "Servicios",
     totalLabel: "Total estimado",
-    footer: "Si necesita cambiar o cancelar su cita, responda este correo o escríbanos por WhatsApp.",
+    footer: "Para cambiar o cancelar su cita, escríbanos por WhatsApp al +506 6218-0804 con al menos 2 horas de anticipación.",
   },
   en: {
     subject: (business: string) => `Your appointment at ${business} is confirmed`,
@@ -48,7 +52,7 @@ const copy = {
     whenLabel: "Date and time",
     servicesLabel: "Services",
     totalLabel: "Estimated total",
-    footer: "If you need to change or cancel your appointment, reply to this email or message us on WhatsApp.",
+    footer: "To change or cancel your appointment, message us on WhatsApp at +506 6218-0804 at least 2 hours in advance.",
   },
 };
 
@@ -207,6 +211,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: FROM_EMAIL,
+        reply_to: REPLY_TO,
         to: [appointment.client_email],
         subject: t.subject(businessName),
         html,

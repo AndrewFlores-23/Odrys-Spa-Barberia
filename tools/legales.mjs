@@ -9,10 +9,12 @@
 // duplicarse acá: así, si mañana se agrega un enlace al menú, estas páginas
 // lo heredan sin que haya que acordarse de tocarlas.
 //
-// IMPORTANTE: los valores en DATOS marcados como null salen en la página
-// resaltados como pendientes. No son decorativos: sin la razón social y la
-// cédula jurídica, la política de privacidad no identifica al responsable
-// del tratamiento, que es justo lo que exige la Ley 8968.
+// IMPORTANTE: los valores en null salen en la página resaltados como
+// pendientes, y el generador los lista al terminar. No son decorativos: sin
+// saber quién responde y cómo contactarlo, la política de privacidad no
+// identifica al responsable del tratamiento, que es lo que exige la Ley 8968.
+//
+// Los números de sección se calculan solos: los títulos van sin numerar.
 //
 // Esto es un borrador funcional, no un texto revisado por un abogado.
 import { readFileSync, writeFileSync } from "node:fs";
@@ -30,10 +32,18 @@ const DATOS = {
   horario: "todos los días de 9 a. m. a 7 p. m.",
   provincia: "Tamarindo, Santa Cruz, Guanacaste, Costa Rica",
 
-  // Pendientes: los tiene que dar la dueña del negocio.
-  direccionExacta: null,    // señas exactas del local en Tamarindo
-  correoDatos: null,        // correo de contacto para asuntos de datos personales
-  politicaCancelacion: null, // cuántas horas antes se puede cancelar sin costo
+  direccionExacta: "Centro Comercial Galerías del Mar",
+  correoDatos: "beautyspaodrys@gmail.com",
+  politicaCancelacion: "2 horas",
+
+  // Medios de pago que recibe el local: efectivo, tarjeta, SINPE Móvil...
+  // Es opcional: si queda en null, esa línea simplemente no se imprime. El
+  // resto de la sección de pago sigue teniendo sentido, porque lo que dice es
+  // que el sitio NO cobra en línea.
+  //
+  // Vale la pena llenarlo igual: alguien que llega sin efectivo a un servicio
+  // de $180 es un problema evitable.
+  metodosPago: null,
 };
 
 // ------------------------------------------------------ Quién es responsable
@@ -49,22 +59,21 @@ const RESPONSABLE = {
 
   // Con tipo "fisica": nombre completo de la dueña, como aparece en su cédula.
   // Con tipo "juridica": razón social exacta del registro.
-  nombre: null,
+  nombre: "Audrey Vargas Gil",
 
   // Cédula de identidad o cédula jurídica, según el caso.
-  identificacion: null,
+  identificacion: "8-0076-0015",
 
   // Publicar o no el número en la página.
   //
-  // Para una sociedad conviene: la cédula jurídica es información pública del
-  // Registro Nacional y da seriedad.
+  // Va publicado. En Costa Rica el padrón electoral del TSE es público y ya
+  // contiene nombre y cédula, así que el número no es un dato reservado, y en
+  // la política identifica sin ambigüedad a quién responde por los datos.
   //
-  // Para una persona física es discutible. El número de cédula es un dato
-  // personal de la dueña y publicarlo en una web abierta facilita suplantación.
-  // La ley pide que el responsable sea identificable y contactable, y eso se
-  // cumple con nombre, domicilio y correo. Por eso viene apagado por defecto
-  // cuando es persona física: que lo decida el abogado, no el generador.
-  publicarIdentificacion: false,
+  // Si la dueña o su abogado prefieren no exponerlo, basta con poner false: el
+  // texto se reacomoda solo y sigue cumpliendo, porque la ley se satisface con
+  // nombre, domicilio y correo de contacto.
+  publicarIdentificacion: true,
 };
 
 // Debe coincidir con VERSION_PRIVACIDAD en reservas.js: es lo que se guarda
@@ -112,9 +121,9 @@ const PRIVACIDAD = {
     + "sobre ellos. Está redactada conforme a la Ley N.º 8968 de Protección de la "
     + "Persona frente al Tratamiento de sus Datos Personales y su reglamento.",
   secciones: [
-    ["1. Quién es responsable de sus datos", responsable],
+    ["Quién es responsable de sus datos", responsable],
 
-    ["2. Qué datos recopilamos", `
+    ["Qué datos recopilamos", `
       <p>Cuando usted solicita una cita desde este sitio, guardamos únicamente
       lo necesario para atenderla:</p>
       <ul>
@@ -131,7 +140,7 @@ const PRIVACIDAD = {
       dirección IP, el tipo de navegador y las páginas visitadas. Se usan para
       seguridad y estadísticas agregadas, no para identificarle.</p>`],
 
-    ["3. Para qué usamos sus datos", `
+    ["Para qué usamos sus datos", `
       <ul>
         <li>Agendar, confirmar y preparar su cita.</li>
         <li>Enviarle por correo la confirmación con el detalle de la reserva.</li>
@@ -142,7 +151,7 @@ const PRIVACIDAD = {
       fines comerciales.</strong> Tampoco le enviamos publicidad salvo que usted
       lo solicite expresamente.</p>`],
 
-    ["4. Con qué base legal los tratamos", `
+    ["Con qué base legal los tratamos", `
       <p>Tratamos sus datos con base en el <strong>consentimiento informado y
       expreso</strong> que usted otorga al marcar la casilla de aceptación antes
       de enviar su solicitud de reserva, conforme al artículo 5 de la Ley 8968.</p>
@@ -154,14 +163,14 @@ const PRIVACIDAD = {
       Retirarlo no afecta la validez del tratamiento anterior, pero puede
       impedirnos mantener una cita ya agendada.</p>`],
 
-    ["5. Cuánto tiempo los conservamos", `
+    ["Cuánto tiempo los conservamos", `
       <p>Conservamos los datos de una cita mientras sean necesarios para prestar
       el servicio y para cumplir obligaciones contables y tributarias. Cumplido
       ese plazo, se eliminan o se anonimizan.</p>
       <p>Si usted pide la supresión de sus datos antes, la atendemos salvo que
       exista una obligación legal de conservarlos.</p>`],
 
-    ["6. Quién más puede acceder a ellos", `
+    ["Quién más puede acceder a ellos", `
       <p>Para que el sistema funcione nos apoyamos en proveedores que actúan como
       encargados del tratamiento. Solo acceden a lo indispensable y están
       obligados a proteger la información:</p>
@@ -174,7 +183,7 @@ const PRIVACIDAD = {
       <p>Dentro del negocio, cada persona del equipo ve únicamente las citas que
       le corresponden. La administración tiene acceso completo a la agenda.</p>`],
 
-    ["7. Transferencia internacional de datos", `
+    ["Transferencia internacional de datos", `
       <p>Como se indica arriba, sus datos se almacenan en servidores ubicados
       <strong>fuera de Costa Rica</strong>, principalmente en Estados Unidos.</p>
       <p>Conforme al artículo 14 de la Ley 8968, al aceptar esta política usted
@@ -182,7 +191,7 @@ const PRIVACIDAD = {
       llamándonos al ${DATOS.telefono} o escribiéndonos por WhatsApp, sin usar
       el formulario del sitio.</p>`],
 
-    ["8. Sus derechos", `
+    ["Sus derechos", `
       <p>La ley le reconoce el derecho a la autodeterminación informativa. En
       concreto, usted puede:</p>
       <ul>
@@ -198,12 +207,12 @@ const PRIVACIDAD = {
       <p>Si considera que no atendimos bien su solicitud, puede acudir a la
       <strong>Agencia de Protección de Datos de los Habitantes (PRODHAB)</strong>.</p>`],
 
-    ["9. Menores de edad", `
+    ["Menores de edad", `
       <p>El formulario de reserva está pensado para personas mayores de edad. Si
       la cita es para una persona menor, debe reservarla su madre, padre o
       encargado legal, y acompañarla durante el servicio.</p>`],
 
-    ["10. Cómo protegemos la información", `
+    ["Cómo protegemos la información", `
       <p>El sitio funciona sobre conexión cifrada (HTTPS). Las contraseñas del
       personal se guardan cifradas y nunca en texto plano. El acceso a la agenda
       exige iniciar sesión, tiene límite de intentos y cada persona ve solo lo
@@ -211,13 +220,13 @@ const PRIVACIDAD = {
       <p>Ningún sistema es infalible. Si ocurriera un incidente que afecte sus
       datos, se lo comunicaríamos y lo reportaríamos según corresponda.</p>`],
 
-    ["11. Uso de imágenes", `
+    ["Uso de imágenes", `
       <p>Las fotografías y videos del sitio muestran trabajos hechos en el local.
       Se publican con autorización de las personas que aparecen en ellos. Si
       usted aparece en alguna imagen y desea que la retiremos, escríbanos y lo
       hacemos.</p>`],
 
-    ["12. Cambios a esta política", `
+    ["Cambios a esta política", `
       <p>Podemos actualizar esta política si cambia la forma en que tratamos los
       datos. La versión vigente siempre estará publicada en esta página, con su
       fecha de última actualización.</p>`],
@@ -236,9 +245,9 @@ const TERMINOS = {
     "Estas condiciones regulan el uso de este sitio y del sistema de reservas. "
     + "Al solicitar una cita, usted acepta lo que se describe a continuación.",
   secciones: [
-    ["1. Quiénes somos", responsable],
+    ["Quiénes somos", responsable],
 
-    ["2. Qué significa reservar", `
+    ["Qué significa reservar", `
       <p>Al enviar el formulario, su cita queda registrada en nuestra agenda y
       recibe un correo de confirmación con el detalle. <strong>La reserva no
       implica ningún cobro en línea</strong>: el pago se realiza en el local o al
@@ -247,25 +256,41 @@ const TERMINOS = {
       imprevisto con el profesional asignado. En ese caso se lo avisamos cuanto
       antes por correo o WhatsApp.</p>`],
 
-    ["3. Precios", `
+    ["Precios", `
       <p>Los precios del catálogo están expresados en <strong>dólares
       estadounidenses (USD)</strong>. El sitio permite verlos en colones usando
       un tipo de cambio de referencia: <strong>ese monto es orientativo</strong> y
       el cobro final se calcula al tipo de cambio del día.</p>
-      <p>Algunos servicios se muestran como “precio por confirmar” porque
-      dependen del largo del cabello, la cantidad de producto u otros factores.
-      En esos casos el monto se acuerda en el local antes de comenzar.</p>
+      <p>Algunos servicios aparecen como <strong>“desde” un monto</strong>. Son
+      aquellos, sobre todo de color, en los que el precio final depende del largo
+      del cabello, la cantidad de producto, el color anterior y el resultado que
+      se busque. En esos casos el monto exacto se acuerda con usted en el local
+      <strong>antes de comenzar</strong>, nunca después.</p>
+      <p>Otros se muestran como “precio por confirmar” cuando no es posible
+      anticipar una cifra. Igual que en el caso anterior, se define de previo.</p>
       <p>El total que aparece al reservar es una <strong>estimación</strong> con
       los precios vigentes al momento de la reserva.</p>`],
 
-    ["4. Duración de las citas", `
+    ["Sobre el pago", `
+      <p><strong>Este sitio no cobra nada en línea.</strong> No pedimos datos de
+      tarjeta, no se requiere depósito ni adelanto para reservar, y la reserva no
+      genera ningún cargo.</p>
+      <p>El pago se realiza <strong>en el local al terminar el servicio</strong>,
+      o al momento de la atención si es a domicilio.</p>
+      ${DATOS.metodosPago ? `<p>Medios de pago aceptados: ${DATOS.metodosPago}.</p>` : ""}
+      <p>Como nunca solicitamos pagos por adelantado, si recibe un mensaje o
+      correo pidiéndole una transferencia a nombre de ${DATOS.marca},
+      <strong>desconfíe</strong> y escríbanos al ${DATOS.telefono} antes de
+      enviar dinero.</p>`],
+
+    ["Duración de las citas", `
       <p>Cada servicio tiene una duración estimada. La agenda trabaja en bloques,
       de modo que el tiempo reservado puede ser algo mayor que la suma de los
       servicios elegidos.</p>
       <p>La duración real puede variar según el tipo de cabello, el estado de la
       piel o las uñas y el resultado que se busque.</p>`],
 
-    ["5. Cancelaciones y cambios", `
+    ["Cancelaciones y cambios", `
       <p>Si no puede asistir, le agradecemos avisarnos con al menos
       ${dato(DATOS.politicaCancelacion, "cuántas horas de anticipación se piden para cancelar")}
       de anticipación, por WhatsApp al ${DATOS.telefono}. Eso nos permite ofrecer
@@ -273,12 +298,12 @@ const TERMINOS = {
       <p>Las cancelaciones repetidas sin aviso pueden llevarnos a solicitar
       confirmación previa para futuras reservas.</p>`],
 
-    ["6. Llegadas tarde", `
+    ["Llegadas tarde", `
       <p>Si llega tarde, haremos lo posible por atenderle, pero es posible que el
       servicio deba acortarse para no afectar a la siguiente cita. Si el atraso
       es considerable, podríamos tener que reprogramar.</p>`],
 
-    ["7. Servicio a domicilio", `
+    ["Servicio a domicilio", `
       <p>Atendemos en residencias, villas y alojamientos de Tamarindo y
       alrededores. La ubicación exacta y las condiciones se coordinan por
       WhatsApp después de la reserva.</p>
@@ -286,7 +311,7 @@ const TERMINOS = {
       trabajar. Si al llegar no es posible prestarlo en condiciones apropiadas,
       podríamos tener que reprogramarlo.</p>`],
 
-    ["8. Salud y condiciones previas", `
+    ["Salud y condiciones previas", `
       <p>Los masajes y tratamientos corporales no son un tratamiento médico ni
       sustituyen una consulta profesional.</p>
       <p>Es importante que nos informe antes de la cita si está embarazada, tiene
@@ -296,24 +321,24 @@ const TERMINOS = {
       <p>Nos reservamos el derecho de no realizar un servicio si consideramos que
       puede afectar su salud.</p>`],
 
-    ["9. Menores de edad", `
+    ["Menores de edad", `
       <p>Los menores deben venir acompañados por su madre, padre o encargado
       legal, quien autoriza el servicio y permanece durante su realización.</p>`],
 
-    ["10. Uso del sitio", `
+    ["Uso del sitio", `
       <p>Este sitio y su sistema de reservas son para uso personal y de buena fe.
       No está permitido usarlos para enviar solicitudes falsas, automatizadas o
       masivas, ni para intentar acceder a información de otras personas.</p>
       <p>Los textos, fotografías, videos y el logotipo son propiedad del negocio
       y no pueden reproducirse sin autorización.</p>`],
 
-    ["11. Disponibilidad del servicio", `
+    ["Disponibilidad del servicio", `
       <p>Procuramos que el sitio esté siempre disponible, pero puede haber
       interrupciones por mantenimiento o por fallas de los proveedores. Si el
       formulario no funciona, siempre puede reservar por WhatsApp al
       ${DATOS.telefono}, ${DATOS.horario}.</p>`],
 
-    ["12. Legislación aplicable", `
+    ["Legislación aplicable", `
       <p>Estas condiciones se rigen por la legislación de la República de Costa
       Rica, incluida la Ley N.º 7472 de Promoción de la Competencia y Defensa
       Efectiva del Consumidor y la Ley N.º 8968 de Protección de Datos
@@ -334,7 +359,7 @@ const COOKIES = {
     + "funcione correctamente. No usamos cookies de publicidad ni de seguimiento "
     + "entre sitios.",
   secciones: [
-    ["1. Qué guardamos y para qué", `
+    ["Qué guardamos y para qué", `
       <p>Usamos <em>almacenamiento local</em>, que es parecido a una cookie pero
       no viaja a ningún servidor: se queda en su dispositivo.</p>
       <table class="tabla-legal">
@@ -348,14 +373,14 @@ const COOKIES = {
       preferencias de visualización, por eso no mostramos un banner pidiendo
       permiso: sin ellas el sitio no podría recordar su idioma.</p>`],
 
-    ["2. En el panel del personal", `
+    ["En el panel del personal", `
       <p>La sección administrativa, que solo usa el equipo del negocio, guarda
       además la sesión iniciada, el correo si la persona marca “recordar mi
       correo”, y un contador de intentos fallidos de acceso, que sirve para
       bloquear temporalmente tras varios errores.</p>
       <p>Nunca se guarda la contraseña en el navegador.</p>`],
 
-    ["3. Servicios de terceros", `
+    ["Servicios de terceros", `
       <ul>
         <li><strong>Cloudflare</strong> publica el sitio y lo protege de ataques.
         Registra datos técnicos como la dirección IP y realiza analítica agregada
@@ -367,14 +392,14 @@ const COOKIES = {
         reservas.</li>
       </ul>`],
 
-    ["4. Cómo borrar esta información", `
+    ["Cómo borrar esta información", `
       <p>Puede eliminarla en cualquier momento desde su navegador, en la sección
       de privacidad o datos de sitios web. También se borra si navega en modo
       incógnito y cierra la ventana.</p>
       <p>Al borrarla, el sitio volverá a mostrarse en español y con precios en
       dólares hasta que elija otra vez.</p>`],
 
-    ["5. Más información", `
+    ["Más información", `
       <p>Para saber cómo tratamos los datos que usted nos envía al reservar,
       consulte nuestra <a href="privacidad.html">Política de Privacidad</a>.</p>`],
   ],
@@ -398,7 +423,10 @@ function pagina(def, otras) {
     .join("");
 
   const cuerpo = def.secciones
-    .map(([titulo, html]) => `<section class="legal-seccion"><h2>${titulo}</h2>${html}</section>`)
+    // El número se calcula acá y no se escribe en el título: así, insertar una
+    // sección en medio no obliga a renumerar todas las de abajo a mano, que es
+    // justo donde se cuelan los errores.
+    .map(([titulo, html], i) => `<section class="legal-seccion"><h2>${i + 1}. ${titulo}</h2>${html}</section>`)
     .join("\n      ");
 
   return `<!DOCTYPE html>
@@ -450,7 +478,8 @@ for (const def of TODAS) {
 }
 
 const pendientes = [
-  ...Object.entries(DATOS).filter(([, v]) => v === null).map(([k]) => k),
+  // metodosPago es opcional: si falta, esa línea no se imprime y ya.
+  ...Object.entries(DATOS).filter(([k, v]) => v === null && k !== "metodosPago").map(([k]) => k),
   ...(RESPONSABLE.nombre === null ? [esFisica ? "RESPONSABLE.nombre (nombre de la propietaria)" : "RESPONSABLE.nombre (razón social)"] : []),
   ...(RESPONSABLE.publicarIdentificacion && RESPONSABLE.identificacion === null ? ["RESPONSABLE.identificacion"] : []),
 ];
