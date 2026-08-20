@@ -43,7 +43,7 @@ const DATOS = {
   //
   // Vale la pena llenarlo igual: alguien que llega sin efectivo a un servicio
   // de $180 es un problema evitable.
-  metodosPago: null,
+  metodosPago: "efectivo, tarjeta y SINPE Móvil",
 };
 
 // ------------------------------------------------------ Quién es responsable
