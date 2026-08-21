@@ -74,7 +74,7 @@ const paginas = [
     titulo: "Barbería en Tamarindo | Cortes, Fade, Barba y Estilismo | Odry's",
     descripcion:
       "Barbería en Tamarindo, Guanacaste: cortes clásicos, fade, perfilado de barba, "
-      + "coloración y trenzas. Reserve su cita en línea y elija con qué profesional atenderse.",
+      + "coloración y alisados. Reserve su cita en línea y elija con qué profesional atenderse.",
     imagen: `${SITIO}/assets/images/og-barberia.jpg`,
     imagenAlt: "Barbería y estilismo de Odry's en Tamarindo, Guanacaste",
     tipo: "HairSalon",

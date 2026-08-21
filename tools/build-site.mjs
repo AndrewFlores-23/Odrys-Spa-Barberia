@@ -9,7 +9,8 @@
 // explícitamente qué se publica, y tanto Cloudflare Pages como GitHub Actions
 // lo usan, así que no pueden divergir.
 import { cp, mkdir, rm, writeFile, access } from "node:fs/promises";
-import { join, resolve, dirname } from "node:path";
+import { existsSync } from "node:fs";
+import { join, resolve, dirname, sep } from "node:path";
 
 const raiz = resolve(import.meta.dirname, "..");
 const salida = join(raiz, "_site");
@@ -54,10 +55,31 @@ for (const archivo of ARCHIVOS) {
   await cp(origen, destino);
 }
 
+// No todo lo que vive en assets/ tiene que publicarse. Sin este filtro el
+// sitio subía 79 MB, de los cuales unos 69 MB no los usa nadie:
+//
+//   · assets/originals/ son los archivos tal como llegaron, antes de
+//     comprimir. Se guardan en el repositorio para poder rehacer una
+//     conversión, pero publicarlos significa que cualquiera puede bajarse el
+//     video original de 19 MB en vez del de 0,7 MB.
+//
+//   · Los .png de assets/images son la versión previa a convertir a .webp,
+//     que es la que el sitio realmente pide. Cada uno pesa varios MB y ninguno
+//     se referencia, salvo el logo, que no tiene versión .webp.
+//
+// Los archivos NO se borran del repositorio: solo dejan de copiarse a _site.
+function sePublica(origen) {
+  const ruta = origen.split(sep).join("/");
+  if (ruta.includes("/assets/originals")) return false;
+  // Un .png con hermano .webp es la versión vieja: se queda fuera.
+  if (ruta.endsWith(".png") && existsSync(origen.replace(/\.png$/, ".webp"))) return false;
+  return true;
+}
+
 for (const carpeta of CARPETAS) {
   const origen = join(raiz, carpeta);
   if (!(await existe(origen))) continue;
-  await cp(origen, join(salida, carpeta), { recursive: true });
+  await cp(origen, join(salida, carpeta), { recursive: true, filter: sePublica });
 }
 
 // Evita que GitHub Pages procese el sitio con Jekyll y descarte carpetas que
