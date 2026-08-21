@@ -538,3 +538,35 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
   .customer-fields .consentimiento>span{font-size:15px}
   .customer-fields .consentimiento input[type=checkbox]{width:22px;height:22px}
 }
+
+/* --- Un servicio solo en su grupo ocupa todo el ancho ---------------------
+   La rejilla del catálogo es de tres columnas. Un grupo con un único servicio
+   dejaba la tarjeta metida en un tercio con dos columnas vacías al lado, y eso
+   se lee como un sobrante, no como algo destacado. Justo lo contrario de lo
+   que se quiere para la exfoliación de café, que es el servicio que distingue
+   al local en la zona.
+
+   Se resuelve con :only-child en vez de con una clase puesta a mano: cualquier
+   grupo que quede con un solo servicio se acomoda solo, hoy y mañana, sin que
+   nadie tenga que acordarse de marcarlo. */
+.catalog-grid > .catalog-card:only-child{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:1.6fr 1fr;
+  align-items:center;
+  gap:0 4vw;
+}
+.catalog-grid > .catalog-card:only-child .service-index{grid-row:1;align-self:start}
+.catalog-grid > .catalog-card:only-child > div:not(.catalog-meta){grid-column:1}
+.catalog-grid > .catalog-card:only-child h3{font-size:clamp(30px,3.4vw,44px);line-height:1.06}
+.catalog-grid > .catalog-card:only-child > div:not(.catalog-meta) p{max-width:52ch;font-size:16px}
+.catalog-grid > .catalog-card:only-child .catalog-meta{grid-column:2;justify-content:flex-start}
+.catalog-grid > .catalog-card:only-child > a{grid-column:2;width:max-content}
+
+@media(max-width:800px){
+  /* En celular vuelve a una sola columna: no hay ancho que repartir. */
+  .catalog-grid > .catalog-card:only-child{grid-template-columns:1fr;gap:0}
+  .catalog-grid > .catalog-card:only-child .catalog-meta,
+  .catalog-grid > .catalog-card:only-child > a{grid-column:1}
+  .catalog-grid > .catalog-card:only-child h3{font-size:clamp(26px,7vw,34px)}
+}
