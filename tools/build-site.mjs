@@ -99,11 +99,17 @@ for (const carpeta of CARPETAS) {
 // Ahora el número se calcula del contenido del archivo. Si el archivo cambia,
 // la URL cambia sola; si no cambia, se mantiene y el navegador sigue
 // reutilizando lo que ya tiene. Es imposible olvidarse.
+// Los saltos de línea se normalizan antes de calcular la huella. Git los
+// convierte según el sistema donde se hace el checkout, así que el mismo
+// archivo da bytes distintos en Windows y en el servidor de Cloudflare. Sin
+// esto, la huella cambiaría sola en cada despliegue y obligaría a todos los
+// visitantes a volver a descargar un archivo idéntico.
 async function huella(rutaRelativa) {
   const completa = join(salida, rutaRelativa);
   if (!existsSync(completa)) return null;
   const { createHash } = await import("node:crypto");
-  return createHash("md5").update(await readFile(completa)).digest("hex").slice(0, 10);
+  const texto = (await readFile(completa, "utf8")).replace(/\r\n/g, "\n");
+  return createHash("md5").update(texto, "utf8").digest("hex").slice(0, 10);
 }
 
 const HTML = [...ARCHIVOS.filter((a) => a.endsWith(".html")), "admin/index.html"];
