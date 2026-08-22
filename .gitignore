@@ -54,3 +54,8 @@ next-env.d.ts
 .vs/
 .idea/
 .vscode/
+
+# Archivos de otros proyectos que caigan por error dentro de assets/.
+# Uno de Lunara se publicó en el sitio de la clienta por venir arrastrado en
+# un "git add -A"; esto evita que vuelva a pasar sin que nadie lo note.
+/assets/lunara-*
