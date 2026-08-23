@@ -627,9 +627,14 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
    Aparece solo en los servicios que declaran materiales o variantes. Va entre
    el precio y el botón de agregar, que es el orden en que se decide: cuánto
    cuesta, qué material, agregar. */
+/* Sin margen horizontal: la tarjeta ya tiene padding y todos sus hijos se
+   apoyan en ese borde. Un margen propio acá desalineaba el selector respecto
+   del precio y del botón de agregar. El margen inferior iguala al que deja
+   .catalog-meta, para que el ritmo vertical no se rompa al insertar un
+   elemento en medio. */
 .catalog-card .opcion-servicio{
   display:flex;flex-direction:column;gap:7px;
-  margin:0 20px 16px;
+  margin:0 0 25px;
 }
 .catalog-card .opcion-servicio>span{
   font-size:9px;font-weight:800;letter-spacing:.14em;opacity:.72;
@@ -662,7 +667,7 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
 @media(max-width:800px){
   /* 16px otra vez, para que iOS no amplíe la página al tocarlo. */
   .catalog-card .opcion-servicio select{font-size:16px;min-height:50px}
-  .catalog-card .opcion-servicio{margin:0 18px 16px}
+  .catalog-card .opcion-servicio{margin:0 0 22px}
 }
 
 /* Los materiales, dentro del bloque destacado. Fichas sueltas, sin viñetas:
