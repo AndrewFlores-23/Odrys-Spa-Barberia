@@ -711,3 +711,15 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
   .destacado-materiales{gap:7px;margin-bottom:28px}
   .destacado-materiales li{padding:8px 13px;font-size:11px}
 }
+
+/* --- Nada de emojis donde debería haber tipografía ------------------------
+   Caracteres como ↗ y ↓ están marcados como emoji en Unicode aunque su
+   presentación por defecto sea de texto. En escritorio se dibujan con la
+   tipografía del sitio; en celular el sistema suele elegir la fuente de emoji
+   y los saca en color, lo que le quita seriedad a la página.
+
+   El arreglo de fondo es el selector de variación U+FE0E, que ya va escrito
+   junto a cada flecha en el HTML. Esta regla es el refuerzo para los
+   navegadores que la soportan. El sitio no usa emojis a propósito en ningún
+   lado, así que aplicarla a todo es seguro. */
+body{font-variant-emoji:text}
