@@ -51,6 +51,48 @@
     }).format(amount);
   };
 
+  // Rellena la ficha del bloque destacado con los datos reales del servicio.
+  // El precio y la duración no se escriben en el HTML a propósito: si la dueña
+  // los cambia desde el panel, el destacado se actualiza solo y no queda
+  // anunciando un monto viejo, que es justo lo que hay que evitar cuando el
+  // catálogo y un banner dicen cosas distintas.
+  function rellenarDestacado(servicios) {
+    const ficha = document.querySelector("[data-servicio-destacado]");
+    if (!ficha) return;
+    const buscado = ficha.dataset.servicioDestacado;
+    const s = servicios.find((x) => x.name_es === buscado);
+    if (!s) return;
+
+    // Los materiales del destacado salen de la misma lista que el selector,
+    // así que agregar o quitar uno desde la base lo actualiza en los dos lados.
+    const lista = document.querySelector("[data-materiales-de]");
+    if (lista) {
+      const dueno = servicios.find((x) => x.name_es === lista.dataset.materialesDe);
+      const ops = dueno && Array.isArray(dueno.opciones_es) ? dueno.opciones_es : [];
+      const opsEn = dueno && Array.isArray(dueno.opciones_en) ? dueno.opciones_en : [];
+      lista.innerHTML = ops.map((o, i) => {
+        const en = opsEn[i] || o;
+        return `<li data-es="${esc(o)}" data-en="${esc(en)}">${esc(textoSegunIdioma(o, en))}</li>`;
+      }).join("");
+    }
+
+    const duracion = ficha.querySelector("[data-destacado-duracion]");
+    const precio = ficha.querySelector("[data-destacado-precio]");
+    if (duracion) duracion.textContent = `${s.duration_minutes} min`;
+    if (precio && s.price !== null && s.price !== undefined) {
+      precio.textContent = money(Number(s.price), s.currency || "USD");
+      precio.dataset.precioBase = String(s.price);
+      precio.dataset.moneda = s.currency || "USD";
+    }
+    // El rótulo dice "DESDE" solo si el servicio de verdad tiene precio abierto.
+    const rotulo = precio && precio.previousElementSibling;
+    if (rotulo && !s.precio_desde) {
+      rotulo.dataset.es = "PRECIO";
+      rotulo.dataset.en = "PRICE";
+      rotulo.textContent = textoSegunIdioma("PRECIO", "PRICE");
+    }
+  }
+
   function dibujarCatalogo(servicios) {
     const seccion = document.querySelector("#servicios");
     if (!seccion || !servicios.length) return false;
@@ -76,6 +118,19 @@
             ? `<strong data-es="PRECIO POR CONFIRMAR" data-en="PRICE TO CONFIRM">${esc(textoSegunIdioma("PRECIO POR CONFIRMAR", "PRICE TO CONFIRM"))}</strong>`
             : `<span>${s.duration_minutes} MIN</span><strong>${s.precio_desde ? textoSegunIdioma("desde", "from") + " " : ""}${money(precio, s.currency || "USD")}</strong>`;
 
+          // Si el servicio trae opciones, la tarjeta pide elegir una antes de
+          // agregarlo. Las dos listas van en paralelo: se muestra la del idioma
+          // activo pero el valor enviado es siempre el español, que es contra
+          // lo que valida la base.
+          const ops = Array.isArray(s.opciones_es) ? s.opciones_es : [];
+          const opsEn = Array.isArray(s.opciones_en) ? s.opciones_en : [];
+          const selector = ops.length
+            ? `<label class="opcion-servicio"><span data-es="ELIJA EL MATERIAL" data-en="CHOOSE THE MATERIAL">${esc(textoSegunIdioma("ELIJA EL MATERIAL", "CHOOSE THE MATERIAL"))}</span>`
+              + `<select data-opcion-servicio required><option value="" data-es="Seleccione" data-en="Select">${esc(textoSegunIdioma("Seleccione", "Select"))}</option>`
+              + ops.map((o, i) => `<option value="${esc(o)}" data-es="${esc(o)}" data-en="${esc(opsEn[i] || o)}">${esc(textoSegunIdioma(o, opsEn[i] || o))}</option>`).join("")
+              + `</select></label>`
+            : "";
+
           const descripcion = s.description_es
             ? `<p data-es="${esc(s.description_es)}" data-en="${esc(descEn)}">${esc(textoSegunIdioma(s.description_es, descEn))}</p>`
             : "";
@@ -87,6 +142,7 @@
             + `<span class="service-index">${String(indice).padStart(2, "0")}</span>`
             + `<div><h3 data-es="${esc(s.name_es)}" data-en="${esc(nombreEn)}">${esc(textoSegunIdioma(s.name_es, nombreEn))}</h3>${descripcion}</div>`
             + `<div class="catalog-meta">${meta}</div>`
+            + selector
             + `<a href="#reserva">AGREGAR</a></article>`;
         }).join("");
 
@@ -117,7 +173,7 @@
     // salgan ya correctas si la persona venía viendo colones.
     const [serviciosRes, ajustesRes] = await Promise.all([
       sb.from("services")
-        .select("id,category,name_es,name_en,description_es,description_en,price,precio_desde,currency,duration_minutes,grupo_es,grupo_en,orden_grupo,orden")
+        .select("id,category,name_es,name_en,description_es,description_en,price,precio_desde,currency,duration_minutes,grupo_es,grupo_en,orden_grupo,orden,opciones_es,opciones_en")
         .eq("active", true).eq("category", zonaDeLaPaginaTmp)
         .order("orden_grupo").order("orden"),
       sb.from("ajustes").select("tipo_cambio").eq("id", true).single(),
@@ -125,6 +181,7 @@
     if (serviciosRes.error) throw serviciosRes.error;
     if (ajustesRes.data?.tipo_cambio) tipoCambio = Number(ajustesRes.data.tipo_cambio);
     catalogoDinamico = dibujarCatalogo(serviciosRes.data ?? []);
+    rellenarDestacado(serviciosRes.data ?? []);
   } catch (problema) {
     console.warn("[Odry's] Catálogo desde la base no disponible; se usa el del HTML.", problema);
   }
@@ -153,7 +210,7 @@
     es: {
       add: "AGREGAR +", added: "AGREGADO ✓", empty: "Agregue servicios desde el catálogo para comenzar.",
       service: "servicio", services: "servicios", perService: "por servicio", quantity: "Cantidad de", minus: "Quitar uno", plus: "Agregar uno",
-      confirmPrice: "Precio por confirmar", confirmDuration: "Duración por confirmar", plusConfirm: "+ por confirmar", toConfirm: "Por confirmar", desde: "desde",
+      confirmPrice: "Precio por confirmar", confirmDuration: "Duración por confirmar", plusConfirm: "+ por confirmar", toConfirm: "Por confirmar", desde: "desde", chooseOption: "Elija el material antes de agregar el servicio.",
       view: "VER RESERVA", viewRequest: "Ver reserva", error: "Agregue al menos un servicio antes de reservar.",
       request: "RESERVA CONFIRMADA", client: "Cliente", people: "Personas", selected: "Servicios",
       total: "Total estimado", duration: "Duración", withPro: "Profesional", dateTime: "Fecha y hora",
@@ -175,7 +232,7 @@
     en: {
       add: "ADD +", added: "ADDED ✓", empty: "Add services from the menu to get started.",
       service: "service", services: "services", perService: "per service", quantity: "Quantity of", minus: "Remove one", plus: "Add one",
-      confirmPrice: "Price to confirm", confirmDuration: "Duration to confirm", plusConfirm: "+ to confirm", toConfirm: "To confirm", desde: "from",
+      confirmPrice: "Price to confirm", confirmDuration: "Duration to confirm", plusConfirm: "+ to confirm", toConfirm: "To confirm", desde: "from", chooseOption: "Choose the material before adding the service.",
       view: "VIEW BOOKING", viewRequest: "View booking", error: "Add at least one service before booking.",
       request: "BOOKING CONFIRMED", client: "Guest", people: "Number of guests", selected: "Services",
       total: "Estimated total", duration: "Duration", withPro: "Professional", dateTime: "Date and time",
@@ -274,6 +331,14 @@
         etiqueta.textContent = desde + money(servicio.price, servicio.currency);
       }
     });
+
+    // La ficha del bloque destacado usa el mismo precio, así que también tiene
+    // que seguir el cambio de moneda. Si no, quedaría en dólares mientras el
+    // resto de la página muestra colones.
+    const destacado = document.querySelector("[data-destacado-precio][data-precio-base]");
+    if (destacado) {
+      destacado.textContent = money(Number(destacado.dataset.precioBase), destacado.dataset.moneda || "USD");
+    }
   }
 
   conmutadorMoneda.addEventListener("click", () => {
@@ -307,15 +372,40 @@
     setButtonLabel(service);
     button.addEventListener("click", (event) => {
       event.preventDefault();
+
+      // Servicios con opciones: no se puede agregar sin elegir una. Se avisa
+      // en el mismo lugar donde ya se muestran los demás errores del
+      // formulario, y se enfoca el selector para que no haya que buscarlo.
+      const selectorOpcion = service.card.querySelector("[data-opcion-servicio]");
+      if (selectorOpcion && !selectorOpcion.value) {
+        errorElement.textContent = copy[language()].chooseOption;
+        selectorOpcion.focus();
+        return;
+      }
+      const opcion = selectorOpcion ? selectorOpcion.value : null;
+
       const item = cart.get(service.index);
-      if (item) item.quantity += 1;
-      else cart.set(service.index, { ...service, quantity: 1 });
+      // Se sincroniza la opción con lo que esté elegido ahora: si alguien
+      // cambia el material y vuelve a agregar, manda lo último que eligió.
+      if (item) { item.quantity += 1; item.opcion = opcion; }
+      else cart.set(service.index, { ...service, quantity: 1, opcion });
       setButtonLabel(service, true);
       window.setTimeout(() => setButtonLabel(service), 850);
       errorElement.textContent = "";
       renderCart();
     });
   });
+
+  // La opción viaja siempre en español, porque es contra lo que valida la
+  // base. Para mostrarla en inglés se busca su posición en la lista.
+  function nombreOpcion(item, lang) {
+    if (lang !== "en") return item.opcion;
+    // El propio <option> ya trae el nombre en los dos idiomas, así que no hace
+    // falta arrastrar las listas hasta el carrito.
+    const selector = item.card && item.card.querySelector("[data-opcion-servicio]");
+    const elegido = selector && [...selector.options].find((o) => o.value === item.opcion);
+    return (elegido && elegido.dataset.en) || item.opcion;
+  }
 
   const itemsEnCarrito = () => [...cart.values()].filter((item) => item.quantity > 0);
 
@@ -525,7 +615,8 @@
       itemsContainer.innerHTML = `<p class="empty-cart">${labels.empty}</p>`;
     } else {
       itemsContainer.innerHTML = items.map((item) => {
-        const name = escapeHtml(item.name[lang]);
+        const name = escapeHtml(item.name[lang])
+          + (item.opcion ? ` <em class="opcion-elegida">${escapeHtml(nombreOpcion(item, lang))}</em>` : "");
         const desde = item.priceFrom ? labels.desde + " " : "";
         const unitPrice = item.price === null ? labels.confirmPrice : desde + money(item.price, item.currency);
         const unitDuration = item.duration === null ? labels.confirmDuration : `${item.duration} min ${labels.perService}`;
@@ -660,7 +751,7 @@
         p_client_email: String(data.get("correo") || ""),
         p_client_phone: String(data.get("telefono") || ""),
         p_starts_at: inicio,
-        p_services: items.map((item) => ({ service_id: item.remoteId, quantity: item.quantity })),
+        p_services: items.map((item) => ({ service_id: item.remoteId, quantity: item.quantity, opcion: item.opcion ?? null })),
         p_notes: String(data.get("comentarios") || ""),
         p_language: lang,
         p_party_size: Number(data.get("personas") || 1),

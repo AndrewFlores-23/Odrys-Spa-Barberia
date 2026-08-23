@@ -570,3 +570,114 @@ h1,h2{letter-spacing:-.04em;line-height:.98}h1 em,h2 em,.brand-mark,.mobile-logo
   .catalog-grid > .catalog-card:only-child > a{grid-column:1}
   .catalog-grid > .catalog-card:only-child h3{font-size:clamp(26px,7vw,34px)}
 }
+
+/* --- Destacado de un servicio -------------------------------------------
+   Banda a ancho completo para el servicio que distingue al local: la
+   exfoliación de café, la única de la zona. Va alto en la página, después de
+   la introducción y antes de la galería.
+
+   Se apoya en tipografía y color, no en una fotografía, porque todavía no hay
+   fotos propias del tratamiento. Cuando lleguen, entra una imagen en la
+   columna derecha y la ficha se acomoda debajo: la rejilla ya está pensada
+   para eso.
+
+   Reutiliza el vino y el dorado del sitio en vez de estrenar una paleta. */
+.destacado-servicio{
+  padding:clamp(64px,9vw,110px) 5vw;
+  display:grid;grid-template-columns:1.35fr .65fr;gap:clamp(32px,5vw,6vw);
+  align-items:center;
+  background:var(--wine,#6b294d);color:#fff;
+}
+.destacado-servicio .eyebrow{color:#e8ca88}
+.destacado-servicio h2{
+  margin:0 0 26px;font-size:clamp(40px,5.4vw,78px);line-height:1.02;letter-spacing:-.02em;
+}
+.destacado-servicio h2 em{color:#e8ca88;font-weight:400}
+.destacado-texto>p:not(.eyebrow){
+  margin:0 0 34px;max-width:54ch;
+  font-family:var(--display-font,Georgia,serif);font-size:clamp(16px,1.25vw,18px);
+  line-height:1.68;opacity:.84;
+}
+.destacado-servicio .primary-action{background:#fff;color:var(--wine,#6b294d)}
+.destacado-servicio .primary-action:hover{background:#e8ca88}
+
+/* La ficha: tres datos sueltos, separados por líneas finas. Sin recuadro
+   pesado, para que no compita con el titular. */
+.destacado-ficha{display:flex;flex-direction:column;gap:0}
+.destacado-ficha>div{
+  padding:18px 0;border-top:1px solid rgba(255,255,255,.24);
+}
+.destacado-ficha>div:last-child{border-bottom:1px solid rgba(255,255,255,.24)}
+.destacado-ficha span{
+  display:block;margin-bottom:7px;
+  font-size:9px;font-weight:800;letter-spacing:.17em;color:#e8ca88;
+}
+.destacado-ficha b{
+  font-family:var(--display-font,Georgia,serif);font-weight:400;
+  font-size:clamp(19px,1.8vw,24px);line-height:1.25;
+}
+
+@media(max-width:800px){
+  .destacado-servicio{grid-template-columns:1fr;gap:34px;padding:64px 24px}
+  .destacado-servicio h2{font-size:clamp(34px,9vw,46px)}
+  .destacado-texto>p:not(.eyebrow){margin-bottom:28px}
+}
+
+/* --- Selector de opción dentro de una tarjeta de servicio -----------------
+   Aparece solo en los servicios que declaran materiales o variantes. Va entre
+   el precio y el botón de agregar, que es el orden en que se decide: cuánto
+   cuesta, qué material, agregar. */
+.catalog-card .opcion-servicio{
+  display:flex;flex-direction:column;gap:7px;
+  margin:0 20px 16px;
+}
+.catalog-card .opcion-servicio>span{
+  font-size:9px;font-weight:800;letter-spacing:.14em;opacity:.72;
+}
+.catalog-card .opcion-servicio select{
+  width:100%;padding:13px 12px;border-radius:0;
+  border:1px solid rgba(90,70,100,.34);background:rgba(255,255,255,.72);
+  color:#403447;font:inherit;font-size:15px;
+}
+.catalog-card .opcion-servicio select:focus{
+  outline:none;border-color:var(--accent,#684758);
+  box-shadow:0 0 0 2px rgba(104,71,88,.16);
+}
+/* Mientras no se elige, el selector se marca en dorado: es un paso pendiente,
+   no un campo opcional. */
+.catalog-card .opcion-servicio select:invalid{
+  border-color:#c7a15a;background:rgba(199,161,90,.1);
+}
+.barber-page .catalog-card .opcion-servicio select{
+  background:#292c30;border-color:rgba(255,255,255,.22);color:#fff;
+}
+.barber-page .catalog-card .opcion-servicio select option{background:#292c30}
+
+/* El material elegido, en la línea del carrito. */
+.opcion-elegida{
+  font-style:normal;opacity:.72;
+}
+.opcion-elegida::before{content:"· "}
+
+@media(max-width:800px){
+  /* 16px otra vez, para que iOS no amplíe la página al tocarlo. */
+  .catalog-card .opcion-servicio select{font-size:16px;min-height:50px}
+  .catalog-card .opcion-servicio{margin:0 18px 16px}
+}
+
+/* Los materiales, dentro del bloque destacado. Fichas sueltas, sin viñetas:
+   se leen de un vistazo y funcionan como la ilustración que el bloque no
+   tiene mientras no haya fotografías propias del tratamiento. */
+.destacado-materiales{
+  list-style:none;margin:0 0 34px;padding:0;
+  display:flex;flex-wrap:wrap;gap:9px;
+}
+.destacado-materiales li{
+  padding:9px 15px;border:1px solid rgba(232,202,136,.42);border-radius:999px;
+  font-size:12px;font-weight:700;letter-spacing:.05em;color:#e8ca88;
+}
+.destacado-materiales:empty{display:none;margin:0}
+@media(max-width:800px){
+  .destacado-materiales{gap:7px;margin-bottom:28px}
+  .destacado-materiales li{padding:8px 13px;font-size:11px}
+}

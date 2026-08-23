@@ -443,7 +443,7 @@ async function cargarAgenda() {
     .select(`id, client_name, client_email, client_phone, starts_at, ends_at, status,
              party_size, notes, language,
              employee:profiles!appointments_employee_id_fkey(full_name, role),
-             appointment_services(quantity, price_at_booking, services(name_es))`)
+             appointment_services(quantity, price_at_booking, opcion, services(name_es))`)
     .order("starts_at");
 
   if (desde) consulta = consulta.gte("starts_at", `${desde}T00:00:00`);
@@ -485,7 +485,7 @@ async function cargarAgenda() {
       const unitario = as.price_at_booking === null ? null : Number(as.price_at_booking);
       const subtotal = unitario === null ? null : unitario * as.quantity;
       return `<tr>
-        <td>${escapar(as.services?.name_es ?? "—")}</td>
+        <td>${escapar(as.services?.name_es ?? "—")}${as.opcion ? `<br><span class="opcion-cita">${escapar(as.opcion)}</span>` : ""}</td>
         <td class="num">${as.quantity}</td>
         <td class="num">${unitario === null ? "Por confirmar" : dinero(unitario)}</td>
         <td class="num">${subtotal === null ? "—" : dinero(subtotal)}<br><span class="colones">${subtotal === null ? "" : colones(subtotal)}</span></td>

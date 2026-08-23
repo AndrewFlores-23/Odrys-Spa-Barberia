@@ -587,3 +587,12 @@ dialog textarea{resize:vertical;font-size:.9rem}
   }
   .fila-acciones .casilla-desde input[type=checkbox]{width:21px;height:21px}
 }
+
+/* Material elegido para un servicio, dentro del desglose de la cita. Es lo que
+   la profesional tiene que preparar, así que se destaca en dorado en vez de
+   quedar como un renglón más de la tabla. */
+.opcion-cita{
+  display:inline-block;margin-top:3px;padding:2px 8px;border-radius:999px;
+  background:rgba(199,161,90,.18);color:var(--dorado-hondo);
+  font-size:.68rem;font-weight:700;letter-spacing:.04em;
+}

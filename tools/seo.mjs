@@ -97,24 +97,29 @@ const paginas = [
   {
     archivo: "spa.html",
     ruta: "/spa.html",
-    // El título lleva la exfoliación de café por delante a propósito. Es el
-    // único servicio de este tipo en la zona, así que una búsqueda como
-    // "exfoliación café Tamarindo" o "coffee body scrub Tamarindo" casi no
-    // tiene competencia: quien la hace ya viene decidida, solo falta que
-    // encuentre el local. "Spa en Tamarindo" se mantiene porque es el término
-    // de mayor volumen. Queda en 57 caracteres para que Google no lo corte.
+    // El título lleva la exfoliación por delante a propósito. Es el único
+    // tratamiento de este tipo en la zona, así que una búsqueda como
+    // "exfoliación Tamarindo" o "body scrub Tamarindo" casi no tiene
+    // competencia: quien la hace ya viene decidida, solo falta que encuentre
+    // el local. Se nombra el café porque es el material con el que más se la
+    // busca, aunque se trabajen seis. "Spa en Tamarindo" se mantiene porque es
+    // el término de mayor volumen, y el título queda en 60 caracteres para que
+    // Google no lo corte.
     titulo: "Spa en Tamarindo | Exfoliación de Café y Masajes | Odry's",
     descripcion:
-      "Exfoliación corporal de café de Costa Rica, masajes, manicure y pedicure "
-      + "en gel y depilación en Tamarindo, Guanacaste. Servicio en el local o a "
-      + "domicilio en villas y residencias.",
+      "Exfoliación corporal con café 100% costarricense, lava volcánica, sal "
+      + "marina, avena, sábila o frutas. Masajes, manicure y pedicure en gel y "
+      + "depilación en Tamarindo, Guanacaste. En el local o a domicilio.",
     imagen: `${SITIO}/assets/images/og-spa.jpg`,
-    imagenAlt: "Spa de Odry's en Tamarindo: exfoliación de café, masajes, manicure y pedicure",
+    imagenAlt: "Spa de Odry's en Tamarindo: exfoliación corporal, masajes, manicure y pedicure",
     tipo: "DaySpa",
-    // El nombre completo, no "Exfoliación corporal" a secas: el café de Costa
-    // Rica es lo que la distingue, y así es como la va a buscar alguien.
+    // Cada material va como servicio propio en los datos estructurados aunque
+    // en el catálogo sean una sola tarjeta: son términos de búsqueda distintos
+    // y no compiten entre sí.
     servicios: [
-      "Exfoliación corporal de café de Costa Rica",
+      "Exfoliación corporal", "Exfoliación de café 100% costarricense",
+      "Exfoliación de lava volcánica", "Exfoliación de sal marina",
+      "Exfoliación de avena", "Exfoliación de sábila",
       "Masaje sueco relajante", "Masaje de tejido profundo", "Masaje con piedras calientes",
       "Masaje tailandés", "Masaje con bambú", "Reflexología", "Manicure en gel",
       "Pedicure en gel", "Depilación con cera",
