@@ -18,7 +18,11 @@ const salida = join(raiz, "_site");
 
 const ARCHIVOS = [
   "index.html",
-  "odrys-mockup.html",
+  // odrys-mockup.html no se publica: es la maqueta de la que salió el inicio y
+  // quedaba viva en el dominio, con el mismo <title> e "index,follow". Su
+  // canonical apuntaba al inicio, así que Google la habría consolidado, pero no
+  // hay razón para exponer una maqueta en el sitio de la clienta. La hoja
+  // odrys-mockup.css sí se publica: la usan todas las páginas reales.
   "barberia.html",
   "spa.html",
   // Páginas legales, generadas por tools/legales.mjs.
