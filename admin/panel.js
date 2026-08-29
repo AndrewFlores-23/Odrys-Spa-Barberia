@@ -105,7 +105,11 @@ async function llamarAdmin(cuerpo) {
   });
 
   const datos = await respuesta.json().catch(() => ({}));
-  if (!respuesta.ok) throw new Error(datos.error ?? "No se pudo completar la operación.");
+  if (!respuesta.ok) {
+    const problema = new Error(datos.error ?? "No se pudo completar la operación.");
+    problema.estado = respuesta.status;
+    throw problema;
+  }
   return datos;
 }
 
@@ -444,6 +448,7 @@ async function cargarAgenda() {
     .from("appointments")
     .select(`id, client_name, client_email, client_phone, starts_at, ends_at, status,
              party_size, notes, language,
+             employee_nombre,
              employee:profiles!appointments_employee_id_fkey(full_name, role),
              appointment_services(quantity, price_at_booking, opcion, services(name_es))`)
     .order("starts_at");
@@ -501,7 +506,9 @@ async function cargarAgenda() {
       </div>
       <div class="fila-datos">
         <div><span>CUÁNDO</span><b>${fechaHora(cita.starts_at)} – ${soloHora(cita.ends_at)}</b></div>
-        <div><span>CON</span><b>${escapar(cita.employee?.full_name ?? "—")}</b></div>
+        <div><span>CON</span><b>${cita.employee
+          ? escapar(cita.employee.full_name)
+          : `${escapar(cita.employee_nombre ?? "—")} <small>(cuenta eliminada)</small>`}</b></div>
         <div><span>PERSONAS</span><b>${cita.party_size}</b></div>
         <div><span>TOTAL DEL SERVICIO</span><b>${dinero(monto)}${hayPendientes ? " +" : ""}<br><span class="colones">${colones(monto)}</span></b></div>
       </div>
@@ -560,7 +567,7 @@ async function cargarUsuarios() {
     return;
   }
 
-  contenedor.innerHTML = usuarios.map((u) => {
+  const filaUsuario = (u) => {
     const confirmado = Boolean(u.email_confirmed_at);
     const insignia = !confirmado
       ? '<span class="insignia espera">Sin confirmar</span>'
@@ -595,7 +602,20 @@ async function cargarUsuarios() {
         `}
       </div>
     </article>`;
-  }).join("");
+  };
+
+  // Las cuentas desactivadas bajan al final, bajo su propio encabezado: dejan
+  // de estorbar entre el personal que sí está trabajando.
+  const estaInactiva = (u) => Boolean(u.email_confirmed_at) && !u.active;
+  const activas = usuarios.filter((u) => !estaInactiva(u));
+  const inactivas = usuarios.filter(estaInactiva);
+
+  contenedor.innerHTML =
+    activas.map(filaUsuario).join("")
+    + (inactivas.length
+      ? `<h3 class="separador-lista">Desactivadas (${inactivas.length})</h3>`
+        + inactivas.map(filaUsuario).join("")
+      : "");
 }
 
 $("#usuarios-lista").addEventListener("click", async (evento) => {
@@ -635,16 +655,22 @@ $("#usuarios-lista").addEventListener("click", async (evento) => {
   }
 
   if (boton.dataset.accion === "eliminar") {
-    if (!confirm(`¿Eliminar la cuenta de ${nombre}? Si tiene citas registradas se desactivará en lugar de borrarse.`)) return;
+    if (!confirm(
+      `¿Eliminar la cuenta de ${nombre}?`
+      + "\n\nSe borra la persona: su nombre, su correo, sus horarios y sus servicios."
+      + " No se puede deshacer."
+      + "\n\nLas citas del historial se conservan a su nombre."
+      + "\n\nSi solo querés quitarle el acceso, cancelá y usá DESACTIVAR.",
+    )) return;
     try {
       const resultado = await llamarAdmin({ accion: "eliminar", id });
-      avisar(
-        resultado.mensaje ?? "Cuenta eliminada.",
-        resultado.desactivado ? "alerta" : "exito",
-        resultado.desactivado ? 12000 : 5000,
-      );
+      avisar(resultado.mensaje ?? "Cuenta eliminada.", "exito", 9000);
       cargarUsuarios();
-    } catch (problema) { avisar(problema.message, "fallo"); }
+    } catch (problema) {
+      // 409 no es un fallo: es "primero resolvé las citas que faltan".
+      const enEspera = problema.estado === 409;
+      avisar(problema.message, enEspera ? "alerta" : "fallo", enEspera ? 12000 : 5000);
+    }
   }
 });
 

@@ -205,48 +205,45 @@ Deno.serve(async (peticion) => {
           return responder(400, { error: "No podés eliminar tu propia cuenta." });
         }
 
-        // Las citas conservan el historial: appointments.employee_id no borra
-        // en cascada, así que si la persona tiene alguna se desactiva en vez de
-        // borrarse. Antes este camino ignoraba el error del UPDATE y respondía
-        // "se desactivó" aunque la fila hubiera quedado activa.
-        const { count, error: errorConteo } = await comoServicio
+        // Desde 0027 el historial ya no depende de la cuenta: cada cita guarda
+        // el nombre de quien atendió, y al borrar el perfil su employee_id
+        // queda en nulo sin llevarse la cita. Así que se borra de verdad.
+        const { count: futuras, error: errorConteo } = await comoServicio
           .from("appointments")
           .select("id", { count: "exact", head: true })
-          .eq("employee_id", id);
+          .eq("employee_id", id)
+          .eq("status", "confirmada")
+          .gte("starts_at", new Date().toISOString());
         if (errorConteo) return responder(400, { error: errorConteo.message });
 
-        const citas = count ?? 0;
-        if (citas > 0) {
-          const { error } = await comoServicio
-            .from("profiles").update({ active: false }).eq("id", id);
-          if (error) return responder(400, { error: error.message });
-
-          // Desactivar no toca la agenda: las citas futuras siguen ahí y hay
-          // que reasignarlas o cancelarlas a mano.
-          const { count: futuras } = await comoServicio
-            .from("appointments")
-            .select("id", { count: "exact", head: true })
-            .eq("employee_id", id)
-            .eq("status", "confirmada")
-            .gte("starts_at", new Date().toISOString());
-
-          const pendientes = futuras ?? 0;
-          return responder(200, {
-            ok: true,
-            desactivado: true,
-            citas,
+        // Lo único que sí frena el borrado: las citas que todavía no ocurrieron.
+        // Quedarían en la agenda sin nadie asignado y con una clienta esperando.
+        const pendientes = futuras ?? 0;
+        if (pendientes > 0) {
+          return responder(409, {
+            error: `Esa persona tiene ${pendientes} cita(s) confirmada(s) a futuro. `
+              + "Reasignalas o cancelalas en la agenda y después eliminá la cuenta.",
             pendientes,
-            mensaje:
-              `Tiene ${citas} cita(s) en el historial, así que la cuenta se desactivó en lugar de borrarse.`
-              + (pendientes > 0
-                ? ` Atención: ${pendientes} sigue(n) agendada(s) a futuro; reasignalas o cancelalas desde la agenda.`
-                : ""),
           });
         }
 
+        const { count: historial } = await comoServicio
+          .from("appointments")
+          .select("id", { count: "exact", head: true })
+          .eq("employee_id", id);
+
         const { error } = await comoServicio.auth.admin.deleteUser(id);
         if (error) return responder(400, { error: error.message });
-        return responder(200, { ok: true, eliminado: true, mensaje: "Cuenta eliminada." });
+
+        const citas = historial ?? 0;
+        return responder(200, {
+          ok: true,
+          eliminado: true,
+          citas,
+          mensaje: citas > 0
+            ? `Cuenta eliminada. Las ${citas} cita(s) del historial se conservan a su nombre.`
+            : "Cuenta eliminada.",
+        });
       }
 
       default:

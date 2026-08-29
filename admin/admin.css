@@ -306,6 +306,11 @@ dialog textarea{resize:vertical;font-size:.9rem}
 }
 .aviso.exito{background:var(--verde)}
 .aviso.fallo{background:var(--rojo)}
+/* Encabezado que parte una lista en dos grupos. */
+.separador-lista{
+  margin:22px 0 2px;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gris);font-weight:600;
+}
 /* Ni éxito ni error: la acción hizo algo distinto de lo que se pidió. */
 .aviso.alerta{background:var(--dorado-hondo)}
 @keyframes entrar{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
