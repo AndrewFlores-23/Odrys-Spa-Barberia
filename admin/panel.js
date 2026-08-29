@@ -73,12 +73,14 @@ const fechaLocal = (desplazamientoDias = 0) => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split("T")[0];
 };
 
-function avisar(mensaje, tipo = "") {
+function avisar(mensaje, tipo = "", milisegundos = 5000) {
   const nodo = document.createElement("div");
   nodo.className = `aviso ${tipo}`;
   nodo.textContent = mensaje;
   $("#avisos").append(nodo);
-  setTimeout(() => nodo.remove(), 5000);
+  // Un aviso largo —como el de "se desactivó y quedan citas"— no alcanza a
+  // leerse en los cinco segundos que sirven para un "listo".
+  setTimeout(() => nodo.remove(), milisegundos);
 }
 
 function mostrarPantalla(cual) {
@@ -567,10 +569,12 @@ async function cargarUsuarios() {
         : '<span class="insignia alto">Desactivado</span>';
     const esYo = u.id === sesionPerfil.id;
 
-    return `<article class="fila" data-usuario="${u.id}" data-email="${escapar(u.email ?? "")}" data-rol="${u.role}">
+    const inactiva = confirmado && !u.active;
+
+    return `<article class="fila${inactiva ? " inactiva" : ""}" data-usuario="${u.id}" data-email="${escapar(u.email ?? "")}" data-rol="${u.role}">
       <div class="fila-principal">
         <h3>${escapar(u.full_name)}${esYo ? " <small>(vos)</small>" : ""}</h3>
-        <p>${escapar(u.email ?? "sin correo")}</p>
+        <p>${escapar(u.email ?? "sin correo")}${inactiva ? " · <b>cuenta desactivada, no puede entrar al panel</b>" : ""}</p>
       </div>
       <div class="fila-datos">
         <div><span>ROL</span><b>${ROLES[u.role] ?? u.role}</b></div>
@@ -619,7 +623,12 @@ $("#usuarios-lista").addEventListener("click", async (evento) => {
     const activar = boton.textContent.trim() === "ACTIVAR";
     try {
       await llamarAdmin({ accion: "cambiar_estado", id, active: activar });
-      avisar(activar ? "Cuenta activada." : "Cuenta desactivada.", "exito");
+      avisar(
+        activar
+          ? `${nombre} vuelve a tener acceso al panel.`
+          : `${nombre} quedó desactivada: ya no puede entrar al panel ni recibir reservas nuevas.`,
+        "exito",
+      );
       cargarUsuarios();
     } catch (problema) { avisar(problema.message, "fallo"); }
     return;
@@ -629,7 +638,11 @@ $("#usuarios-lista").addEventListener("click", async (evento) => {
     if (!confirm(`¿Eliminar la cuenta de ${nombre}? Si tiene citas registradas se desactivará en lugar de borrarse.`)) return;
     try {
       const resultado = await llamarAdmin({ accion: "eliminar", id });
-      avisar(resultado.mensaje ?? "Cuenta eliminada.", "exito");
+      avisar(
+        resultado.mensaje ?? "Cuenta eliminada.",
+        resultado.desactivado ? "alerta" : "exito",
+        resultado.desactivado ? 12000 : 5000,
+      );
       cargarUsuarios();
     } catch (problema) { avisar(problema.message, "fallo"); }
   }

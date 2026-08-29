@@ -164,8 +164,8 @@ Deno.serve(async (peticion) => {
         }
         // El trigger de la base retira solo los servicios que el nuevo rol no permite.
         const { error } = await comoServicio.from("profiles").update({ role: rol }).eq("id", id);
-        if (error) throw error;
-        return responder(200, { ok: true });
+        if (error) return responder(400, { error: error.message });
+        return responder(200, { ok: true, role: rol });
       }
 
       // ---------------------------------------------------------------------
@@ -176,8 +176,10 @@ Deno.serve(async (peticion) => {
           return responder(400, { error: "No podés desactivarte a vos mismo." });
         }
         const { error } = await comoServicio.from("profiles").update({ active: activo }).eq("id", id);
-        if (error) throw error;
-        return responder(200, { ok: true });
+        // Se devuelve el motivo real: el 500 genérico que había acá tapaba
+        // que un disparador de la base estaba rechazando el cambio.
+        if (error) return responder(400, { error: error.message });
+        return responder(200, { ok: true, active: activo });
       }
 
       // ---------------------------------------------------------------------
@@ -203,25 +205,48 @@ Deno.serve(async (peticion) => {
           return responder(400, { error: "No podés eliminar tu propia cuenta." });
         }
 
-        // Las citas conservan el historial: si la persona tiene alguna, se
-        // desactiva en vez de borrarse, para no perder el registro.
-        const { count } = await comoServicio
+        // Las citas conservan el historial: appointments.employee_id no borra
+        // en cascada, así que si la persona tiene alguna se desactiva en vez de
+        // borrarse. Antes este camino ignoraba el error del UPDATE y respondía
+        // "se desactivó" aunque la fila hubiera quedado activa.
+        const { count, error: errorConteo } = await comoServicio
           .from("appointments")
           .select("id", { count: "exact", head: true })
           .eq("employee_id", id);
+        if (errorConteo) return responder(400, { error: errorConteo.message });
 
-        if ((count ?? 0) > 0) {
-          await comoServicio.from("profiles").update({ active: false }).eq("id", id);
+        const citas = count ?? 0;
+        if (citas > 0) {
+          const { error } = await comoServicio
+            .from("profiles").update({ active: false }).eq("id", id);
+          if (error) return responder(400, { error: error.message });
+
+          // Desactivar no toca la agenda: las citas futuras siguen ahí y hay
+          // que reasignarlas o cancelarlas a mano.
+          const { count: futuras } = await comoServicio
+            .from("appointments")
+            .select("id", { count: "exact", head: true })
+            .eq("employee_id", id)
+            .eq("status", "confirmada")
+            .gte("starts_at", new Date().toISOString());
+
+          const pendientes = futuras ?? 0;
           return responder(200, {
             ok: true,
             desactivado: true,
-            mensaje: `Esa persona tiene ${count} cita(s) registradas. Se desactivó en lugar de borrarse para no perder el historial.`,
+            citas,
+            pendientes,
+            mensaje:
+              `Tiene ${citas} cita(s) en el historial, así que la cuenta se desactivó en lugar de borrarse.`
+              + (pendientes > 0
+                ? ` Atención: ${pendientes} sigue(n) agendada(s) a futuro; reasignalas o cancelalas desde la agenda.`
+                : ""),
           });
         }
 
         const { error } = await comoServicio.auth.admin.deleteUser(id);
-        if (error) throw error;
-        return responder(200, { ok: true, eliminado: true });
+        if (error) return responder(400, { error: error.message });
+        return responder(200, { ok: true, eliminado: true, mensaje: "Cuenta eliminada." });
       }
 
       default:
